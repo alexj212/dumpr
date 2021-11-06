@@ -124,12 +124,26 @@ func (s *Session) AgeMs() int64 {
 
 // Age returns the age in human-readable form of age of the session
 func (s *Session) Age() string {
-	return humanize.RelTime(time.Now(), s.StartTime, "", "")
+	d := time.Now().Sub(s.StartTime)
+	duration := durafmt.Parse(d)
+	return duration.Format(duraFormatOveride)
+}
+
+// SessionActiveTime returns the duration of session in human-readable format
+func (s *Session) SessionActiveTime() string {
+	d := s.EndTime.Sub(s.StartTime)
+	duration := durafmt.Parse(d)
+	return duration.Format(duraFormatOveride)
 }
 
 // FormattedStartTime returns formatted start time
 func (s *Session) FormattedStartTime() string {
 	return s.StartTime.Format(time.ANSIC)
+}
+
+// FormattedEndTime returns formatted end time
+func (s *Session) FormattedEndTime() string {
+	return s.EndTime.Format(time.ANSIC)
 }
 
 // Description returns the description of a session for web

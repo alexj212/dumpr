@@ -5,7 +5,6 @@
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.js"></script>
 
 <style>
-
     html, body, .outer, .inner, .content {
         height: 100%;
         padding: 5px;
@@ -13,6 +12,11 @@
     }
 
     #details {
+        color: black;
+        display: flex;
+        justify-content: space-around
+    }
+    #details-active {
         color: green;
         display: flex;
         justify-content: space-around
@@ -30,14 +34,14 @@
 <p><a href="/">Session List</a></p>
 <hr/>
 <br/>
-<div id="details">
+<div {{if .session.Active}}id="details-active"{{else}}id="details"{{end}}>
     <div>Client IP: {{.session.IP}}</div>
-    <div>Start Time: {{.session.FormattedStartTime}}</div>
+    <div>Session Start Time: {{.session.FormattedStartTime}}</div>
+    {{if not .session.Active}}<div> Session End Time: {{.session.FormattedEndTime}}</div>
+    <div>Duration: {{.session.SessionActiveTime}}</div>{{end}}
 </div>
 
-
 <div id="terminal"></div>
-
 <script>
     let term = new Terminal({
         convertEol: true,
