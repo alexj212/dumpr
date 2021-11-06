@@ -1,0 +1,37 @@
+{{define "head"}}
+<style>
+    body {
+        max-width: 900px;
+        margin: 2em auto;
+        line-height: 1.5;
+        font-size: 12px;
+    }
+
+    p {
+        font-family: Helvetica Neue, sans-serif;
+    }
+</style>
+{{end}}
+
+{{define "content"}}
+<h1>dumpr! <img width="40" src="/dumpr.png"></h1>
+{{include "partials/howto"}}
+
+<p><a href="/">View Captured Sessions</a></p>
+<pre>
+
+
+/                           - html listing of sessions
+/about                      - about the project
+/t/:name                    - return the log file for a session.
+/t/:name/:filename          - return a file uploaded in a multi part upload session.
+/v/:name                    - live view html page
+/v/:name/ws                 - websocket for live updated for a session log file.
+/api/list/sessions          - return a json array of all sessions.
+/api/list/active            - return a json array of active sessions.
+/api/list/inactive          - return a json array of inactive sessions.
+/api/info/:name             - return json structure of the session.
+/api/autoresponder/:id      - return auto responder for rule id.
+/api/autoresponder/list     - return list of all auto responders.
+    </pre>
+{{end}}

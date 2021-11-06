@@ -1,0 +1,84 @@
+{{define "head"}}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@4.14.0/css/xterm.css" />
+<script src="https://cdn.jsdelivr.net/npm/xterm@4.14.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.js"></script>
+
+<style>
+
+    html, body, .outer, .inner, .content {
+        height: 100%;
+        padding: 5px;
+        margin: 0;
+    }
+
+    #details {
+        color: green;
+        display: flex;
+        justify-content: space-around
+    }
+
+    #terminal {
+        height: 85%;
+        width: 100%;
+    }
+</style>
+{{end}}
+
+{{define "content"}}
+<h1>dumpr! <img width="40" src="/dumpr.png"></h1>
+<p><a href="/">Session List</a></p>
+<hr/>
+<br/>
+<div id="details">
+    <div>Client IP: {{.session.IP}}</div>
+    <div>Start Time: {{.session.FormattedStartTime}}</div>
+</div>
+
+
+<div id="terminal"></div>
+
+<script>
+    let term = new Terminal({
+        convertEol: true,
+        scrollback: 10000,
+        disableStdin: true,
+        focus: false,
+    });
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(document.getElementById('terminal'));
+    fitAddon.fit();
+    window.addEventListener('resize', () => {
+        console.log('resizing terminal');
+        fitAddon.fit() }
+    );
+
+
+
+
+    let loc = window.location, new_uri;
+    if (loc.protocol === "https:") {
+        new_uri = "wss:";
+    } else {
+        new_uri = "ws:";
+    }
+    new_uri += "//" + loc.host;
+    new_uri += loc.pathname + "/ws";
+    console.log('ws url: ', new_uri);
+
+    let socket = new WebSocket(new_uri);
+
+    // Connection opened
+    socket.addEventListener('open', function () {
+        console.log('ws connected');
+    });
+
+    // Listen for messages
+    socket.addEventListener('message', function (event) {
+        console.log('Message from server ', event.data);
+        term.write(event.data);
+    });
+
+</script>
+{{end}}

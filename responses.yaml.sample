@@ -1,0 +1,52 @@
+---
+responses:
+  - method: GET
+    path: /hello.text
+    status_code: 200
+    content_type: text/plain
+    response: |
+      Hello World!!!!
+  - method: GET
+    path: /hello.json
+    status_code: 200
+    content_type: text/json
+    response: |
+      {
+        "message": "Hello World"
+      }
+  - method: GET
+    path: /hello.world
+    status_code: 200
+    content_type: text/plain
+    response: |
+      thiis is the response of multi
+      lines and will see
+      how it comes back
+  - method: GET
+    path: /hello1.world
+    status_code: 200
+    content_type: text/json
+    response: |
+      {
+        "ForceQuery": false,
+        "RawQuery": "",
+        "Fragment": "",
+        "RawFragment": ""
+      }
+  - method: GET
+    path: /hello.world.2
+    status_code: 200
+    content_type: text/plain
+    response: |
+      thiis is the response of multi
+      lines and will see
+      how it comes back
+  - method: GET
+    path: /.*
+    status_code: 500
+    content_type: text/plain
+    response: my response
+
+  -
+
+

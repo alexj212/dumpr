@@ -1,0 +1,17 @@
+<p>Start capturing http and tcp sessions now. Try one of the example commands to start capturing.</p>
+<pre>
+    http -f POST http://{{.publicIP}}:{{.publicTCPPort}}/hello.world  files@avatar.png
+        post a multipart form to the endpoint http://{{.publicIP}}:{{.publicHttpPort}}/hello.world
+
+    http -f POST http://{{.publicIP}}:{{.publicHttpPort}}/hello.text
+        post to the url
+
+    http -f POST http://{{.publicIP}}:{{.publicTCPPort}}/hello.json
+        post to the url
+
+    http PUT http://{{.publicIP}}:{{.publicTCPPort}}/api/test --raw 'aaaaaaa'
+        put to the url with a body of 'aaaaaaa'
+
+    ticker.sh|nc {{.publicIP}} {{.publicTCPPort}}
+        ticker.sh is a long running command, this will take the output of the command and send to the endpoint at {{.publicIP}} {{.publicTCPPort}}
+</pre>
