@@ -1,12 +1,21 @@
-## dumpr
-![dumpr](./web/favicon-32x32.png "dumpr")
+# dumpr!
+![dumpr!](./web/favicon-32x32.png "dumpr!")
 
-A tcp / http request dumpr endpoints. The project was inspired by seashells.io, pastebin and other projects. The server will expose 2 ports, a http server and a tcp server. All connection info along with inbound traffic is saved to disk. 
-While a connection is active, a url is available that will provide live updates to the session log file. A session log can be downloaded as well. If http traffic is detected the session is decoded and information is saved to disk. The data is in a json format, will list path, protocol, headers and body. Multipart form uploads are parsed and saved to disk as well.
-Various web service urls are available to list sessions, pull session info and files. 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)[![Go Report Card](https://goreportcard.com/badge/github.com/alexj212/dumpr)](https://goreportcard.com/report/github.com/alexj212/dumpr)
 
-## Auto Responder
-Another ability that dumpr has is that it can be setup to return a custom response based on request pattern match. A match is made against the 'method' and 'path'. Any match that is made will send a response with the 'status_code', 'content-type' and 'response'. The 'method' and 'path' values can be regular expressions.
+dumpr! is a tool to capture text based tcp traffic. The project came about for the need to capture a web request from the back end. It was also inspired by seashells.io. The server will expose 2 ports, a http server and a tcp server. 
+
+All connection info along with inbound traffic is saved to a file. 
+While a connection is active, a url is available that will provide live updates to the session log file. This allows a client to pipe a command output to dumpr!, and watch/share the output with a browser. A session log can be downloaded as well. 
+
+If http traffic is detected the session is decoded and information is saved. The data is in a json format, will list path, protocol, headers and body. Multipart form uploads are parsed and saved to disk as well. URLs are available to download multipart upload files as well.
+
+Various web service urls are available to list sessions, pull session info and files.  
+
+# Auto Responder
+Another ability that dumpr! has is that it can be setup to return a custom response based on request pattern match. 
+
+A match is made against the 'method' and 'path'. Any match that is made will send a response with the 'status_code', 'content-type' and 'response'. The 'method' and 'path' values can be regular expressions.
 
 The auto responder system uses a yaml file to define the rules for the auto responder. The yml file can be defined with 
 
@@ -14,7 +23,7 @@ The auto responder system uses a yaml file to define the rules for the auto resp
   --responses=responses.yaml    auto responder file
 ```
 
-### responses.yaml 
+## responses.yaml 
 ```.yaml
 responses:
   - method: .*
@@ -46,34 +55,9 @@ responses:
 
 
 
-## Web Service URLS
-Web service urls are provided to access list of session, session info, assets and auto responder rules.   
+# WebCapture
 
-
-
-```
-/                           - html listing of sessions
-/about                      - about the project
-/t/:name                    - return the log file for a session.
-/t/:name/:filename          - return a file uploaded in a multi part upload session.
-/v/:name                    - live view html page    
-/v/:name/ws                 - websocket for live updated for a session log file.
-/api/list/sessions          - return a json array of all sessions.
-/api/list/active            - return a json array of active sessions.
-/api/list/inactive          - return a json array of inactive sessions.
-/api/info/:name             - return json structure of the session.
-/api/autoresponder/:id      - return auto responder for rule id.
-/api/autoresponder/list     - return list of all auto responders.
-
-
-
-Any unknown url is logged.
-```
-
-
-## WebCapture
-
-
+Here is a typical usage of dumpr!. A client is making an http post to the dumpr! backend. The response below shows the autoresponder body. Also in the http response, dumpr! will add some response headers that provide urls to view the session details and assets.
 
 ```bash
 $ http -f POST http://127.0.0.1:8081/hello.txt
@@ -105,28 +89,85 @@ Hello World!!!!
 ```
 
 
-## Http Headers
+
+# MultiPart File Upload
+```bash
+http -f POST http://127.0.0.1:8081/hello.world  files@avatar.png
+
+POST /hello.world HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Length: 346059
+Content-Type: multipart/form-data; boundary=2a8d0eea14d14e498086f221171ba2e2
+Host: 127.0.0.1:8081
+User-Agent: HTTPie/2.5.0
+
+
++-----------------------------------------+
+| NOTE: binary data not shown in terminal |
++-----------------------------------------+
+ 
+
+HTTP/1.1 200 OK
+Content-Length: 494
+Content-Type: application/json; charset=utf-8
+Date: Sat, 06 Nov 2021 13:31:09 GMT
+X-Session-Info-URL: http://127.0.0.1:8080/api/info/x8KyJVmvEld2o3lvQba2Y7P9aZBo0e
+X-Session-Key: x8KyJVmvEld2o3lvQba2Y7P9aZBo0e
+X-Session-URL: http://127.0.0.1:8080/v/x8KyJVmvEld2o3lvQba2Y7P9aZBo0e
+
+{
+    "code": "SESSION_CREATED",
+    "infoURL": "http://127.0.0.1:8080/api/info/x8KyJVmvEld2o3lvQba2Y7P9aZBo0e",
+    "name": "x8KyJVmvEld2o3lvQba2Y7P9aZBo0e",
+    "requestBodyURL": "http://127.0.0.1:8080/t/x8KyJVmvEld2o3lvQba2Y7P9aZBo0e/body",
+    "textURL": "http://127.0.0.1:8080/t/x8KyJVmvEld2o3lvQba2Y7P9aZBo0e",
+    "uploadedFile_avatar.png_URL": "http://127.0.0.1:8080/t/x8KyJVmvEld2o3lvQba2Y7P9aZBo0e/avatar.png",
+    "viewURL": "http://127.0.0.1:8080/v/x8KyJVmvEld2o3lvQba2Y7P9aZBo0e"
+}
+
 ```
-X-AutoResponder-ID: 0
-X-AutoResponder-Name: rule 1
 
-
-X-Session-Info-URL: http://127.0.0.1:8080/api/info/92WQZePap1mwMGMDyVN0G7Ld4zlk3J
-X-Session-Key: 92WQZePap1mwMGMDyVN0G7Ld4zlk3J
-X-Session-URL: http://127.0.0.1:8080/v/92WQZePap1mwMGMDyVN0G7Ld4zlk3J
+# Streaming Logs
+```bash
+$ ticker.sh|nc 127.0.0.1 8081
+view at http://127.0.0.1:8080/v/d7pMBYojyqA2ZzqQqPx2D4J9kQ1Pve
 
 ```
+![](./docs/streaming.png)
 
 
 
-## Building
+
+# Web Service URLS
+Web service urls are provided to access list of session, session info, assets and auto responder rules.   
+
+```
+/                           - html listing of sessions
+/about                      - about the project
+/t/:name                    - return the log file for a session.
+/t/:name/:filename          - return a file uploaded in a multi part upload session.
+/v/:name                    - live view html page    
+/v/:name/ws                 - websocket for live updated for a session log file.
+/api/list/sessions          - return a json array of all sessions.
+/api/list/active            - return a json array of active sessions.
+/api/list/inactive          - return a json array of inactive sessions.
+/api/info/:name             - return json structure of the session.
+/api/autoresponder/:id      - return auto responder for rule id.
+/api/autoresponder/list     - return list of all auto responders.
+
+Any unknown url is logged.
+```
+
+# Building
 
 ```.bash
 make dumpr
 ```
 Will create a binary `./bin/dumpr`
 
-## Running
+# Running
 
 ```.bash
 ./bin/dumpr
@@ -135,29 +176,32 @@ Will create a binary `./bin/dumpr`
 This will launch the web server on localhost:8080 and the tcp server on 8081. A Session is stored in the following /tmp/<date>/<session id>
 
 
+## Options 
+  * --saveDir=/tmp
+    * Sets the save directory for http/tcp connections. 
 
-## Options
+  * --webDir=./web
+    * Set the dir for the app to use for the web assets, and templates. Only needed for creating custom templates.
 
-```.bash
-Options:
-  --saveDir=/tmp                save directory
-  --webDir=./web                web assets directory
-  --quiet                       silently log to file
-  --host=0.0.0.0                host for server
-  --publicUrl=http://127.0.0.1  public url
-  --publicPort=8080             public port for http server
-  --tcpport=8081                tcp port for server
-  --port=8080                   port for server
-  --responses=responses.yaml    auto responder file
-  -h, --help                    Show usage message
-  --version                     Show version
-```
+  * --publicIP=127.0.0.1
+    * Set the public ip for the service. This is used for populating templates with urls or response headers.
+ 
+  * --publicHttpPort=8080
+    * Set the public port for the http service. This is used for populating templates with urls or response headers.
 
+  * --port=8080
+    * Set the port for the http service.
 
+  * --tcpport=8081
+    * Set the port for the tcp service.
 
+  * --publicTCPPort=8081
+    * Set the public port for the tcp service. This is used for populating templates with urls or response headers.
 
+  * --responses=responses.yaml
+    * Define the auto responder file for the service. 
 
-
-
+  * --export
+    * Will make the application export the embedded templates to --webDir value. The application will exit once completed. The templates can then be customized. 
 
 
