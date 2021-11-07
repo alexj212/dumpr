@@ -14,6 +14,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"time"
 )
 
 var (
@@ -56,11 +57,15 @@ var (
 	publicTCPPort     = goopt.Int([]string{"--publicTCPPort"}, 8081, "public port for tcp server")
 	responsesFile     = goopt.String([]string{"--responses"}, "responses.yaml", "auto responder file")
 	exportTemplates   = goopt.Flag([]string{"--export"}, nil, "export templates to --webDir value.", "")
+	purgeOlderThanStr = goopt.String([]string{"--purgeOlderThan"}, "24h", "Purge sessions from disk older than value. 0 will disable.")
+	maxSessionSz      = goopt.Int([]string{"--maxSessionSize"}, 1, "maximum session size in mb.")
 	hasher            *hashids.HashID
 	assets            fs.FS
 	assetsHTTPFS      http.FileSystem
 	m                 melody.Melody
 	duraFormatOveride durafmt.Units
+	purgeOlderThan    *durafmt.Durafmt
+	maxSessionSize    int
 )
 
 func init() {
@@ -96,6 +101,14 @@ dumpr
 }
 
 func main() {
+	var err error
+	purgeOlderThan, err = durafmt.ParseString(*purgeOlderThanStr)
+	if err != nil {
+		fmt.Printf("Invalid field: purgeInterval - %v\n", err)
+		os.Exit(1)
+	}
+
+	maxSessionSize = *maxSessionSz << (10 * 2) // 2 refers to the constants ByteSize MB
 
 	OsSignal = make(chan os.Signal, 1)
 
@@ -120,7 +133,7 @@ func main() {
 	)
 
 	defer logeShutdown()
-	var err error
+
 	assets, err = SetupFS()
 	if err != nil {
 		fmt.Printf("Error initializing assets fs, error: %v\n", err)
@@ -143,6 +156,9 @@ func main() {
 		fmt.Printf("Error initializing db, error: %v\n", err)
 		return
 	}
+	defer func() {
+		_ = db.Close()
+	}()
 
 	sessionList, err := LoadSessions()
 	if err != nil {
@@ -151,9 +167,9 @@ func main() {
 	}
 	fmt.Printf("Loaded from db %d sessions\n", len(sessionList))
 
-	defer func() {
-		_ = db.Close()
-	}()
+	if purgeOlderThan.Duration() > 0 {
+		go LaunchSessionReaper()
+	}
 
 	err = InitializeAutoResponders()
 	if err != nil {
@@ -178,4 +194,32 @@ func main() {
 		SaveAllSessions()
 		fmt.Printf("Saved all sessions\n")
 	})
+}
+
+// LaunchSessionReaper launches the session reaper that will cleanup sessions older than purgeOlderThan option.
+func LaunchSessionReaper() {
+	fmt.Printf("launching cleanup prcoess, will delete sessions older than %v\n", purgeOlderThan)
+
+	for {
+		fmt.Printf("Running session cleanup: %v+\n", time.Now())
+
+		purgeSessionList := make([]*Session, 0)
+		for _, v := range Sessions {
+			purgeTime := v.StartTime.Add(purgeOlderThan.Duration())
+
+			fmt.Printf("Session Start Time%v : %v\n", v.StartTime, purgeTime)
+
+			if time.Now().After(purgeTime) {
+				fmt.Printf("File older than %v : %v\n", purgeOlderThan, purgeTime)
+				purgeSessionList = append(purgeSessionList, v)
+			}
+		}
+
+		for i, v := range purgeSessionList {
+			fmt.Printf("[%d] purging session: %s\n", i, v.Key)
+			PurgeSession(v)
+		}
+
+		time.Sleep(time.Minute * 1)
+	}
 }

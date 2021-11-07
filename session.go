@@ -402,3 +402,21 @@ func createNewSessionResponse(session *Session) gin.H {
 
 	return pay
 }
+
+// PurgeSession removes a session and removes all assets and references in db
+func PurgeSession(s *Session) {
+
+	fmt.Printf("Purging Session: %v\n", s.Key)
+
+	_ = os.Remove(s.SaveFile)
+	for _, f := range s.MultiPartFiles {
+		_ = os.Remove(f.File)
+	}
+
+	err := DeleteSession(s.Key)
+	if err != nil {
+		fmt.Printf("Error deleting session: %s error: %v\n", s.Key, err)
+	}
+
+	delete(Sessions, s.Key)
+}

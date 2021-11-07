@@ -10,7 +10,7 @@ While a connection is active, a url is available that will provide live updates 
 
 If http traffic is detected the session is decoded and information is saved. The data is in a json format, will list path, protocol, headers and body. Multipart form uploads are parsed and saved to disk as well. URLs are available to download multipart upload files as well.
 
-Various web service urls are available to list sessions, pull session info and files.  
+Various web service urls are available to list sessions, pull session info and files. The service will also launch a session reaper that will purge sessions older than 24 hours by default. This value can be changed with the option `--purgeOlderThan=24h`  . The value should be a proper time duration.
 
 # Auto Responder
 Another ability that dumpr! has is that it can be setup to return a custom response based on request pattern match. 
@@ -130,6 +130,10 @@ X-Session-URL: http://127.0.0.1:8080/v/x8KyJVmvEld2o3lvQba2Y7P9aZBo0e
 ```
 
 # Streaming Logs
+There is a check that will malke sure a session can only capture a log file up to a specific size. This value can be configured with the option,
+`--maxSessionSize=5          maximum session size in gb.`
+
+
 ```bash
 $ ticker.sh|nc 127.0.0.1 8081
 view at http://127.0.0.1:8080/v/d7pMBYojyqA2ZzqQqPx2D4J9kQ1Pve
@@ -203,5 +207,9 @@ This will launch the web server on localhost:8080 and the tcp server on 8081. A 
 
   * --export
     * Will make the application export the embedded templates to --webDir value. The application will exit once completed. The templates can then be customized. 
+    
+  * --purgeOlderThan=24h        
+    * Purge sessions from disk older than value. 0 will disable.
 
-
+  * --maxSessionSize=5          
+    * maximum session size in mb

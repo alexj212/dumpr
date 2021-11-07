@@ -24,7 +24,10 @@ func InitializeDB() (*bolt.DB, error) {
 	// Open the dumpr.db data file in your current directory.
 	// It will be created if it doesn't exist.
 	var err error
-	db, err := bolt.Open("dumpr.db", 0600, &bolt.Options{
+
+	filename := fmt.Sprintf("%s/dumpr.db", *saveDir)
+
+	db, err := bolt.Open(filename, 0600, &bolt.Options{
 		Timeout: 5 * time.Second,
 	})
 	if err != nil {

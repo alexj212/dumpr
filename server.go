@@ -78,6 +78,7 @@ func handleConn(client net.Conn) {
 	b := bufio.NewReader(client)
 	checkedForHTTP := false
 	sentHeader := false
+	fileSize := 0
 	for {
 		if !checkedForHTTP && b.Buffered() >= 0 {
 			//fmt.Printf("2: %d\n", b.Buffered())
@@ -151,9 +152,14 @@ func handleConn(client net.Conn) {
 			break
 		}
 		pay := buf[:byteRead]
-
+		fileSize += len(pay)
 		_, _ = session.outputFile.Write(pay)
 		_ = m.BroadcastMultiple(pay, session.Viewers)
+		if fileSize >= maxSessionSize {
+			fmt.Printf("Shuting down session: %s max session size reached: %d maxSessionSize: %d\n", session.Key, fileSize, maxSessionSize)
+			break
+		}
+
 	}
 
 	deactivateSession(session)
