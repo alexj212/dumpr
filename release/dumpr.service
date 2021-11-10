@@ -1,0 +1,10 @@
+[Unit]
+Description=dumpr server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/dumpr
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -22,6 +22,8 @@ import (
 	"strconv"
 )
 
+
+
 func createDefaultPageData(pageName string, session *Session) gin.H {
 	data := gin.H{
 		"title":            pageName,
@@ -272,6 +274,8 @@ func GinServer() (err error) {
 		ctx.HTML(http.StatusOK, "about", data)
 	})
 
+	SetupSSERouter(router, "/stream")
+
 	router.NoRoute(func(c *gin.Context) {
 		session, err := createSession(c.ClientIP())
 
@@ -397,3 +401,6 @@ func linearSearch(s []*melody.Session, session *melody.Session) int {
 	}
 	return -1
 }
+
+
+

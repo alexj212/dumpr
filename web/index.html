@@ -13,17 +13,40 @@
         font-family: Helvetica Neue, sans-serif;
     }
 
-    .active-true {
+    .session-active-true {
         color: green;
     }
+    .session-active-false {
+        color: black
+    }
+
 </style>
 {{end}}
 
 {{define "content"}}
-<h1>dumpr! <img width="40" src="/dumpr.png"></h1>
-{{if eq (len .Sessions) 0 }}
-{{include "partials/howto"}}
-{{end}}
+<h2><a href="/about">dumpr!<img width="40" src="/dumpr.png"></a> </h2>
+
+
+
+<div id="howTo" style="height: 350px; border: 1px solid #979797; display: none;">
+    <p>Start capturing http and tcp sessions now. Try one of the example commands to start capturing.</p>
+    <pre>
+    http -f POST http://{{.publicIP}}:{{.publicTCPPort}}/hello.world  files@avatar.png
+        post a multipart form to the endpoint http://{{.publicIP}}:{{.publicHttpPort}}/hello.world
+
+    http -f POST http://{{.publicIP}}:{{.publicHttpPort}}/hello.text
+        post to the url
+
+    http -f POST http://{{.publicIP}}:{{.publicTCPPort}}/hello.json
+        post to the url
+
+    http PUT http://{{.publicIP}}:{{.publicTCPPort}}/api/test --raw 'aaaaaaa'
+        put to the url with a body of 'aaaaaaa'
+
+    ticker.sh|nc {{.publicIP}} {{.publicTCPPort}}
+        ticker.sh is a long running command, this will take the output of the command and send to the endpoint at {{.publicIP}} {{.publicTCPPort}}
+</pre>
+</div>
 
 
 <table
@@ -44,33 +67,14 @@
     </tr>
     </thead>
 
-    <tbody>
-    {{ range $k, $value := .Sessions }}
-    {{$size:=$value.Size}}
-    <tr data-href="/v/{{$value.Key}}/" {{if $value.Active}} class="active-true" {{end}}>
-        <td>{{$value.Key}}</td>
-        <td data-sort="{{$value.AgeMs}}">{{$value.FormattedStartTime}}</td>
-        <td>{{$value.IP}}</td>
-        <td>{{$value.Protocol}}</td>
-        <td>{{$value.Description}}<br/>
-            {{if gt (len $value.MultiPartFiles) 0 }}
-            MultiPart Files: {{len $value.MultiPartFiles}}<br/>
-            {{ range $k, $file := $value.MultiPartFiles }}
-            <a href="/t/{{$value.Key}}/{{$k}}">{{$k}}    {{$file.HumanSize}}<br/></a>
-            {{end}}
-            {{end}}
-
-
-        </td>
-        <td data-sort="{{$size.Val}}">{{$size.FormattedVal}}</td>
-    </tr>
-    {{end}}
+    <tbody id="sessionTableBody">
     </tbody>
 </table>
 <br/>
 <br/>
 
 
+<div class="event-data"></div>
 
 <script src="https://code.jquery.com/jquery.js"></script>
 <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
@@ -78,8 +82,14 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
 
 <script>
+    const sessions = new Map();
+    let sessionTable = null;
+    let counter =0;
     $(function() {
-        $('#sessionTable').DataTable({
+        sessionTable = $('#sessionTable').DataTable({
+            "deferRender": true,
+            "lengthChange": false,
+
             "paging":   true,
             "bLengthChange": false,
             "bPaginate": false,
@@ -107,13 +117,207 @@
                     width: 100,
                 }
             ],
-            "order": [[ 1, "asc" ]]
+            "order": [[ 1, "desc" ]]
         })
 
         $('#sessionTable').on( 'click', 'tbody tr', function () {
             window.location.href = $(this).data('href');
         });
     })
+
+
+    var reconnectFrequencySeconds = 1;
+    var evtSource;
+
+    // Putting these functions in extra variables is just for the sake of readability
+    var waitFunc = function() { return reconnectFrequencySeconds * 1000 };
+    var tryToSetupFunc = function() {
+        setupEventSource();
+        reconnectFrequencySeconds *= 2;
+        if (reconnectFrequencySeconds >= 64) {
+            reconnectFrequencySeconds = 64;
+        }
+    };
+
+    var reconnectFunc = function() {
+        console.log("reconnectFunc");
+        setTimeout(tryToSetupFunc, waitFunc())
+    };
+
+    function setupEventSource() {
+        evtSource = new EventSource("/stream");
+        evtSource.addEventListener("message", function(e){
+            console.log("message", e);
+        });
+        evtSource.addEventListener("keepalive", function(e){
+            //console.log("keepalive received", e);
+        });
+
+        evtSource.addEventListener("sessionCreated", function(e){
+            let s = JSON.parse(e.data);
+            console.log("sessionCreated received", s);
+            sessions.set(s.key, s);
+            console.log("Total Sessions "+ sessions.size);
+            addSession(s);
+        });
+
+        evtSource.addEventListener("sessionDeleted", function(e){
+            const sessionKey = e.data;
+            console.log("sessionDeleted received", sessionKey);
+            sessions.delete(sessionKey);
+            console.log("Total Sessions "+ sessions.size);
+            deleteSession(sessionKey);
+        });
+        evtSource.addEventListener("sessionUpdated", function(e){
+            let s = JSON.parse(e.data);
+            console.log("sessionUpdated received", s);
+            sessions.set(s.key, s);
+            console.log("Total Sessions "+ sessions.size);
+            updateSession(s);
+        });
+
+
+        evtSource.onopen = function(e) {
+            console.log("onopen", e);
+            reconnectFrequencySeconds = 1;
+        };
+        evtSource.onerror = function(e) {
+            console.log("onerror", e);
+            evtSource.close();
+            reconnectFunc();
+        };
+        console.log('setupEventSource completed' );
+    }
+
+    setupEventSource();
+    console.log('Added EventSource');
+
+
+    function loadData() {
+        $.ajax({
+            type: 'GET',
+            url: '/api/list/sessions',
+            contentType: "text/plain",
+            dataType: 'json',
+            success: function (data) {
+                populateSessionTable(data);
+            },
+            error: function (e) {
+                console.log("There was an error with your request...");
+                console.log("error: " + JSON.stringify(e));
+            }
+        });
+    }
+
+
+    loadData();
+
+
+    function deleteSession(sessionKey){
+        console.log('deleteSession::'+sessionKey);
+        let rowId = "tr_"+sessionKey;
+        sessionTable.row("#"+rowId).remove().draw();
+        displayHelp();
+    }
+
+    function updateSession(session){
+        console.log('updateSession::', session);
+        let rowId = "tr_"+session.key;
+        let tableRow = sessionTable.row("#"+rowId)
+        let tableRowNode = tableRow.node();
+
+        let rowData = convertSessionToRowData(session);
+        console.log( "updateSession", rowData);
+        console.log( "updateSession", tableRow);
+        console.log($(tableRow).className);
+        let className = `session-active-${session.active}`;
+        $(tableRowNode).attr('class', className);
+
+        tableRow.data(rowData).draw();
+        displayHelp();
+    }
+
+
+    function convertSessionToRowData(session) {
+
+        let timeCol = session.startTime + "";
+        let ipCol = session.ip;
+        let protocolCol = "unknown";
+        let descCol = "";
+        let sizeCol = "";
+
+
+        if (session.protocol == 0) {
+            protocolCol = "tcp";
+            descCol = session.description;
+        } else if (session.protocol == 1) {
+
+            protocolCol = "http";
+            descCol = session.description;
+            descCol = descCol + " <br/>";
+
+            for (const [key, value] of Object.entries(session.multipartFiles)) {
+                descCol = descCol + '<a href="/t/' + session.key + '/' + key + '">';
+                descCol = descCol + key + " " + value.humanSize + " <br/>";
+                descCol = descCol + '</a>';
+            }
+            descCol = descCol;
+        }
+
+        sizeCol = session.size.FormattedVal;
+
+        var rData = [
+            session.key,
+            timeCol,
+            ipCol,
+            protocolCol,
+            descCol,
+            sizeCol,
+            session.startTimeMs];
+        console.log('convertSessionToRowData::', {session, rData});
+        return rData;
+    }
+
+
+
+    function addSession(session){
+        let data = convertSessionToRowData(session);
+
+        const tr = $(`<tr id="tr_${session.key}" data-href="/v/${session.key}/" class="session-active-${session.active}">
+                        <td>${data[0]}</td>
+                        <td data-sort="${data[6]}">${data[1]}</td>
+                        <td>${data[2]}</td>
+                        <td>${data[3]}</td>
+                        <td>${data[4]}</td>
+                        <td>${data[5]}</td>
+                      </tr>`);
+
+
+        sessionTable.row.add(tr[0]).draw();
+    }
+
+    // populate the sessionTable with JSON data
+    function populateSessionTable(data) {
+        console.log("populating data table...", data);
+        $("#sessionTable").DataTable().clear();
+
+        data.forEach(function (s) {
+            sessions.set(s.key, s);
+            addSession(s);
+        });
+        displayHelp();
+
+        console.log("Total Sessions "+ sessions.size);
+    }
+
+    function displayHelp(){
+        if ( sessions.size==0){
+            $('#howTo').show()
+        } else {
+            $('#howTo').hide()
+        }
+    }
+
 </script>
 
 {{end}}

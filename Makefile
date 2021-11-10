@@ -85,7 +85,8 @@ create_dir:
 check_prereq: create_dir
 
 build_app: create_dir
-		go build -o $(BIN_DIR)/$(BIN_NAME) -a -ldflags '$(COMPILE_LDFLAGS)' $(APP_PATH)
+	export CGO_ENABLED=1
+	go build -o $(BIN_DIR)/$(BIN_NAME) -a -ldflags '$(COMPILE_LDFLAGS)' $(APP_PATH)
 
 
 dumpr: ## build_info ## build example binary in bin dir
@@ -136,12 +137,26 @@ reportcard: ## run goreportcard-cli
 	goreportcard-cli -v
 
 
+
+# Releasing targets
+
+release: # create a release
+	goreleaser release --rm-dist
+
+release-snapshot: # create release snapshot
+	goreleaser release --snapshot --skip-publish --rm-dist
+
+
+
+
 tools: ## install dependent tools for code analysis
 	go get -u honnef.co/go/tools
 	go get -u github.com/gordonklaus/ineffassign
 	go get -u github.com/fzipp/gocyclo
 	go get -u golang.org/x/lint/golint
 	go get -u github.com/alecthomas/gometalinter
-	go install  github.com/gojp/goreportcard/cmd/goreportcard-cli
+	go install  github.com/gojp/goreportcard/cmd/goreportcard-cli@latest
+	go install github.com/goreleaser/goreleaser@latest
+
 
 

@@ -171,6 +171,8 @@ func main() {
 		go LaunchSessionReaper()
 	}
 
+	go LaunchSessionUpdater()
+
 	err = InitializeAutoResponders()
 	if err != nil {
 		fmt.Printf("Error loading auto responders, error: %v\n", err)
@@ -198,7 +200,7 @@ func main() {
 
 // LaunchSessionReaper launches the session reaper that will cleanup sessions older than purgeOlderThan option.
 func LaunchSessionReaper() {
-	fmt.Printf("launching cleanup prcoess, will delete sessions older than %v\n", purgeOlderThan)
+	fmt.Printf("launching cleanup process, will delete sessions older than %v\n", purgeOlderThan)
 
 	for {
 		fmt.Printf("Running session cleanup: %v+\n", time.Now())
@@ -209,7 +211,7 @@ func LaunchSessionReaper() {
 
 			fmt.Printf("Session Start Time%v : %v\n", v.StartTime, purgeTime)
 
-			if time.Now().After(purgeTime) {
+			if time.Now().After(purgeTime) && !v.Active {
 				fmt.Printf("File older than %v : %v\n", purgeOlderThan, purgeTime)
 				purgeSessionList = append(purgeSessionList, v)
 			}
@@ -221,5 +223,22 @@ func LaunchSessionReaper() {
 		}
 
 		time.Sleep(time.Minute * 1)
+	}
+}
+
+
+
+// LaunchSessionUpdater launches the session updater that will send updates for active sessions.
+func LaunchSessionUpdater() {
+	fmt.Printf("launching session updater process, will update sessions every 10 seconds\n")
+
+	for {
+		for _, v := range Sessions {
+			if v.Active {
+				BroadcastNotifier("/stream", SessionUpdated, v.ToApiSession())
+			}
+		}
+
+		time.Sleep(time.Second * 10)
 	}
 }
