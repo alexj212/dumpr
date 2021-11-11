@@ -113,7 +113,6 @@ clean_dumpr: ## clean dumpr
 clean: clean_dumpr ## clean all
 	rm -rf $(DIST_DIR)
 
-
 test: ## run tests
 	go test -v $(PROJ_PATH)
 
@@ -139,20 +138,11 @@ vet: ## run go vet on the project
 reportcard: ## run goreportcard-cli
 	goreportcard-cli -v
 
-
-
-# Releasing targets
-
 release: clean # create a release
-	goreleaser release --rm-dist --skip-publish
+	goreleaser release --rm-dist
 
 release-snapshot: # create release snapshot
 	goreleaser release --snapshot --skip-publish --rm-dist
-
-release-nr: goreleaser.yml
-	goreleaser --skip-publish --rm-dist
-
-
 
 tools: ## install dependent tools for code analysis
 	go install github.com/gordonklaus/ineffassign@latest
