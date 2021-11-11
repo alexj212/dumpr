@@ -236,7 +236,7 @@ func LaunchSessionUpdater() {
 	for {
 		for _, v := range Sessions {
 			if v.Active {
-				Broadcast("/stream", SessionUpdated, v.ToApiSession())
+				Broadcast(SessionUpdated, v.ToApiSession())
 			}
 		}
 

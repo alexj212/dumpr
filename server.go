@@ -143,7 +143,7 @@ func handleConn(client net.Conn) {
 		}
 
 		if !sentHeader {
-			Broadcast("/stream", SessionUpdated, session.ToApiSession())
+			Broadcast( SessionUpdated, session.ToApiSession())
 			_, _ = client.Write([]byte(fmt.Sprintf("view at http://%s:%d/v/%s", *publicIP, *publicHttpPort, session.Key)))
 			sentHeader = true
 		}

@@ -298,7 +298,7 @@ func (s *Session) InitializeHTTP(req *http.Request) {
 		_, _ = s.outputFile.Write(dump)
 	}
 
-	Broadcast("/stream", SessionUpdated, s.ToApiSession())
+	Broadcast( SessionUpdated, s.ToApiSession())
 }
 
 // LoadHTTPRequestJSON load request data file from disk if it is a http based session.
@@ -380,7 +380,7 @@ func deactivateSession(session *Session) {
 	}
 	session.Active = false
 	session.EndTime = time.Now()
-	Broadcast("/stream", SessionUpdated, session.ToApiSession())
+	Broadcast(SessionUpdated, session.ToApiSession())
 	_ = StoreSession(session)
 }
 
@@ -421,7 +421,7 @@ func createSession(ip string) (*Session, error) {
 	session.outputFile = outputFile
 	err = StoreSession(session)
 
-	Broadcast("/stream", SessionCreated, session.ToApiSession())
+	Broadcast( SessionCreated, session.ToApiSession())
 
 	return session, err
 }
@@ -467,5 +467,5 @@ func PurgeSession(s *Session) {
 	}
 
 	delete(Sessions, s.Key)
-	Broadcast("/stream", SessionDeleted, s.Key)
+	Broadcast( SessionDeleted, s.Key)
 }
