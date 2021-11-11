@@ -3,6 +3,7 @@
 export $(shell [ -f ".env" ] && sed 's/=.*//' .env)
 
 export BIN_DIR=./bin
+export DIST_DIR=./dist
 export PROJ_PATH=github.com/alexj212/dumpr
 export DOCKER_APP_NAME=dumpr
 
@@ -85,7 +86,7 @@ create_dir:
 check_prereq: create_dir
 
 build_app: create_dir
-	export CGO_ENABLED=1
+	export CGO_ENABLED=0
 	go build -o $(BIN_DIR)/$(BIN_NAME) -a -ldflags '$(COMPILE_LDFLAGS)' $(APP_PATH)
 
 
@@ -109,6 +110,8 @@ clean_binary: ## clean binary in bin dir
 clean_dumpr: ## clean dumpr
 	make BIN_NAME=dumpr clean_binary
 
+clean: clean_dumpr ## clean all
+	rm -rf $(DIST_DIR)
 
 
 test: ## run tests
@@ -140,23 +143,22 @@ reportcard: ## run goreportcard-cli
 
 # Releasing targets
 
-release: # create a release
-	goreleaser release --rm-dist
+release: clean # create a release
+	goreleaser release --rm-dist --skip-publish
 
 release-snapshot: # create release snapshot
 	goreleaser release --snapshot --skip-publish --rm-dist
 
+release-nr: goreleaser.yml
+	goreleaser --skip-publish --rm-dist
 
 
 
 tools: ## install dependent tools for code analysis
-	go get -u honnef.co/go/tools
-	go get -u github.com/gordonklaus/ineffassign
-	go get -u github.com/fzipp/gocyclo
-	go get -u golang.org/x/lint/golint
-	go get -u github.com/alecthomas/gometalinter
-	go install  github.com/gojp/goreportcard/cmd/goreportcard-cli@latest
+	go install github.com/gordonklaus/ineffassign@latest
+	go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+	go install golang.org/x/lint/golint@latest
+	go install github.com/gojp/goreportcard/cmd/goreportcard-cli@latest
 	go install github.com/goreleaser/goreleaser@latest
-
 
 

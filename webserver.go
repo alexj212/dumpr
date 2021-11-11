@@ -22,15 +22,17 @@ import (
 	"strconv"
 )
 
-
-
 func createDefaultPageData(pageName string, session *Session) gin.H {
 	data := gin.H{
-		"title":            pageName,
-		"publicIP":         *publicIP,
-		"publicHttpPort":   *publicHttpPort,
-		"publicTCPPort":    *publicTCPPort,
-		"httpPort":         *httpPort,
+		"title":                   pageName,
+		"publicIP":                *publicIP,
+		"publicHttpPort":          *publicHttpPort,
+		"publicTCPPort":           *publicTCPPort,
+		"httpPort":                *httpPort,
+		"purgeOlderThan":          purgeOlderThan.String(),
+		"maxSessionSize":          maxSessionSize,
+		"maxSessionSizeFormatted": maxSessionSizeFormatted,
+
 		"Sessions":         GetAllSessions(),
 		"ActiveSessions":   GetActiveSessions(),
 		"InActiveSessions": GetInActiveSessions(),
@@ -401,6 +403,3 @@ func linearSearch(s []*melody.Session, session *melody.Session) int {
 	}
 	return -1
 }
-
-
-

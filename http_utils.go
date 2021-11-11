@@ -98,7 +98,7 @@ func writeJSON(w http.ResponseWriter, v interface{}) (bytesWritten int, err erro
 func LoopForever(shutdownHook func()) {
 	fmt.Printf("Entering infinite loop\n")
 
-	signal.Notify(OsSignal, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR1)
+	signal.Notify(OsSignal, syscall.SIGINT, syscall.SIGTERM) // , syscall.SIGUSR1
 	_ = <-OsSignal
 
 	fmt.Printf("Exiting infinite loop received OsSignal\n")

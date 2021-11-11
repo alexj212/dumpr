@@ -46,26 +46,27 @@ var (
 	// OsSignal signal used to shut down
 	OsSignal chan os.Signal
 
-	saveDir           = goopt.String([]string{"--saveDir"}, "/tmp", "save directory")
-	webDir            = goopt.String([]string{"--webDir"}, "./web", "web assets directory")
-	quiet             = goopt.Flag([]string{"--quiet"}, []string{}, "silently log to file", "")
-	serverHost        = goopt.String([]string{"--host"}, "0.0.0.0", "host for server")
-	publicIP          = goopt.String([]string{"--publicIP"}, "127.0.0.1", "public ip")
-	publicHttpPort    = goopt.Int([]string{"--publicHttpPort"}, 8080, "public port for http server")
-	httpPort          = goopt.Int([]string{"--port"}, 8080, "port for server")
-	tcpPort           = goopt.Int([]string{"--tcpport"}, 8081, "tcp port for server")
-	publicTCPPort     = goopt.Int([]string{"--publicTCPPort"}, 8081, "public port for tcp server")
-	responsesFile     = goopt.String([]string{"--responses"}, "responses.yaml", "auto responder file")
-	exportTemplates   = goopt.Flag([]string{"--export"}, nil, "export templates to --webDir value.", "")
-	purgeOlderThanStr = goopt.String([]string{"--purgeOlderThan"}, "24h", "Purge sessions from disk older than value. 0 will disable.")
-	maxSessionSz      = goopt.Int([]string{"--maxSessionSize"}, 1, "maximum session size in mb.")
-	hasher            *hashids.HashID
-	assets            fs.FS
-	assetsHTTPFS      http.FileSystem
-	m                 melody.Melody
-	duraFormatOveride durafmt.Units
-	purgeOlderThan    *durafmt.Durafmt
-	maxSessionSize    int
+	saveDir                 = goopt.String([]string{"--saveDir"}, "/tmp", "save directory")
+	webDir                  = goopt.String([]string{"--webDir"}, "./web", "web assets directory")
+	quiet                   = goopt.Flag([]string{"--quiet"}, []string{}, "silently log to file", "")
+	serverHost              = goopt.String([]string{"--host"}, "0.0.0.0", "host for server")
+	publicIP                = goopt.String([]string{"--publicIP"}, "127.0.0.1", "public ip")
+	publicHttpPort          = goopt.Int([]string{"--publicHttpPort"}, 8080, "public port for http server")
+	httpPort                = goopt.Int([]string{"--port"}, 8080, "port for server")
+	tcpPort                 = goopt.Int([]string{"--tcpport"}, 8081, "tcp port for server")
+	publicTCPPort           = goopt.Int([]string{"--publicTCPPort"}, 8081, "public port for tcp server")
+	responsesFile           = goopt.String([]string{"--responses"}, "responses.yaml", "auto responder file")
+	exportTemplates         = goopt.Flag([]string{"--export"}, nil, "export templates to --webDir value.", "")
+	purgeOlderThanStr       = goopt.String([]string{"--purgeOlderThan"}, "24h", "Purge sessions from disk older than value. 0 will disable.")
+	maxSessionSz            = goopt.Int([]string{"--maxSessionSize"}, 1, "maximum session size in mb.")
+	hasher                  *hashids.HashID
+	assets                  fs.FS
+	assetsHTTPFS            http.FileSystem
+	m                       melody.Melody
+	duraFormatOveride       durafmt.Units
+	purgeOlderThan          *durafmt.Durafmt
+	maxSessionSize          int
+	maxSessionSizeFormatted string
 )
 
 func init() {
@@ -109,6 +110,8 @@ func main() {
 	}
 
 	maxSessionSize = *maxSessionSz << (10 * 2) // 2 refers to the constants ByteSize MB
+
+	maxSessionSizeFormatted = ByteCountDecimal(int64(maxSessionSize))
 
 	OsSignal = make(chan os.Signal, 1)
 
@@ -203,30 +206,28 @@ func LaunchSessionReaper() {
 	fmt.Printf("launching cleanup process, will delete sessions older than %v\n", purgeOlderThan)
 
 	for {
-		fmt.Printf("Running session cleanup: %v+\n", time.Now())
+		fmt.Printf("Running session cleanup: %v+\n", time.Now().Format(time.ANSIC))
 
 		purgeSessionList := make([]*Session, 0)
 		for _, v := range Sessions {
 			purgeTime := v.StartTime.Add(purgeOlderThan.Duration())
 
-			fmt.Printf("Session Start Time%v : %v\n", v.StartTime, purgeTime)
+			//fmt.Printf("Session Start Time%v : %v\n", v.StartTime, purgeTime)
 
 			if time.Now().After(purgeTime) && !v.Active {
-				fmt.Printf("File older than %v : %v\n", purgeOlderThan, purgeTime)
+				//fmt.Printf("File older than %v : %v\n", purgeOlderThan, purgeTime)
 				purgeSessionList = append(purgeSessionList, v)
 			}
 		}
 
-		for i, v := range purgeSessionList {
-			fmt.Printf("[%d] purging session: %s\n", i, v.Key)
+		for _, v := range purgeSessionList {
+			//fmt.Printf("[%d] purging session: %s\n", i, v.Key)
 			PurgeSession(v)
 		}
 
 		time.Sleep(time.Minute * 1)
 	}
 }
-
-
 
 // LaunchSessionUpdater launches the session updater that will send updates for active sessions.
 func LaunchSessionUpdater() {
@@ -235,7 +236,7 @@ func LaunchSessionUpdater() {
 	for {
 		for _, v := range Sessions {
 			if v.Active {
-				BroadcastNotifier("/stream", SessionUpdated, v.ToApiSession())
+				Broadcast("/stream", SessionUpdated, v.ToApiSession())
 			}
 		}
 

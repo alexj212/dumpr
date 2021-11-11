@@ -24,7 +24,24 @@
 {{end}}
 
 {{define "content"}}
-<h2><a href="/about">dumpr!<img width="40" src="/dumpr.png"></a> </h2>
+<div id="header" style="width: 100%;height: 50px;">
+
+    <div style="width: 50%; height: 100px; float: left; ">
+        <h2><a href="/about">dumpr!<img width="40" src="/dumpr.png"></a> </h2>
+    </div>
+
+    <div id="header2" style="margin-left: 50%; height: 100px; text-align:right;text-overflow:ellipsis;">
+        <div id="connectionStatus">
+
+        </div>
+        <div id="sessionInfo" style="width: 100%;height: 50px;">
+            <pre>
+        Maximum TCP Session size: {{.maxSessionSizeFormatted  }}
+        Sessions older than {{.purgeOlderThan  }} will be deleted.
+        </pre>
+        </div>
+    </div>
+</div>
 
 
 
@@ -47,6 +64,7 @@
         ticker.sh is a long running command, this will take the output of the command and send to the endpoint at {{.publicIP}} {{.publicTCPPort}}
 </pre>
 </div>
+
 
 
 <table
@@ -134,66 +152,76 @@
     var tryToSetupFunc = function() {
         setupEventSource();
         reconnectFrequencySeconds *= 2;
+        console.log("tryToSetupFunc reconnectFrequencySeconds: "+reconnectFrequencySeconds);
         if (reconnectFrequencySeconds >= 64) {
             reconnectFrequencySeconds = 64;
         }
     };
 
     var reconnectFunc = function() {
-        console.log("reconnectFunc");
+        console.log("reconnectFunc reconnectFrequencySeconds: "+reconnectFrequencySeconds);
         setTimeout(tryToSetupFunc, waitFunc())
     };
 
     function setupEventSource() {
         evtSource = new EventSource("/stream");
+        $("#connectionStatus").text("connected to server");
         evtSource.addEventListener("message", function(e){
             console.log("message", e);
         });
         evtSource.addEventListener("keepalive", function(e){
+            $("#connectionStatus").text("connected to server");
             //console.log("keepalive received", e);
         });
 
         evtSource.addEventListener("sessionCreated", function(e){
             let s = JSON.parse(e.data);
-            console.log("sessionCreated received", s);
+            //console.log("sessionCreated received", s);
             sessions.set(s.key, s);
-            console.log("Total Sessions "+ sessions.size);
+            //console.log("Total Sessions "+ sessions.size);
             addSession(s);
         });
 
         evtSource.addEventListener("sessionDeleted", function(e){
             const sessionKey = e.data;
-            console.log("sessionDeleted received", sessionKey);
+            //console.log("sessionDeleted received", sessionKey);
             sessions.delete(sessionKey);
-            console.log("Total Sessions "+ sessions.size);
+            //console.log("Total Sessions "+ sessions.size);
             deleteSession(sessionKey);
         });
         evtSource.addEventListener("sessionUpdated", function(e){
             let s = JSON.parse(e.data);
-            console.log("sessionUpdated received", s);
+            //console.log("sessionUpdated received", s);
             sessions.set(s.key, s);
-            console.log("Total Sessions "+ sessions.size);
+            //console.log("Total Sessions "+ sessions.size);
             updateSession(s);
         });
 
 
         evtSource.onopen = function(e) {
-            console.log("onopen", e);
+            $("#connectionStatus").text("connected to server");
+            //console.log("onopen");
+            console.log("evtSource.onopen reconnectFrequencySeconds: "+reconnectFrequencySeconds);
+            if (reconnectFrequencySeconds > 1) {
+                loadData()
+            }
             reconnectFrequencySeconds = 1;
         };
         evtSource.onerror = function(e) {
-            console.log("onerror", e);
+            console.log("onerror");
+            $("#connectionStatus").text("disconnected from server");
             evtSource.close();
             reconnectFunc();
         };
-        console.log('setupEventSource completed' );
+        //console.log('setupEventSource completed' );
     }
 
     setupEventSource();
-    console.log('Added EventSource');
+    //console.log('Added EventSource');
 
 
     function loadData() {
+
         $.ajax({
             type: 'GET',
             url: '/api/list/sessions',
@@ -221,15 +249,15 @@
     }
 
     function updateSession(session){
-        console.log('updateSession::', session);
+        //console.log('updateSession::', session);
         let rowId = "tr_"+session.key;
         let tableRow = sessionTable.row("#"+rowId)
         let tableRowNode = tableRow.node();
 
         let rowData = convertSessionToRowData(session);
-        console.log( "updateSession", rowData);
-        console.log( "updateSession", tableRow);
-        console.log($(tableRow).className);
+        //console.log( "updateSession", rowData);
+        //console.log( "updateSession", tableRow);
+        //console.log($(tableRow).className);
         let className = `session-active-${session.active}`;
         $(tableRowNode).attr('class', className);
 
@@ -274,7 +302,7 @@
             descCol,
             sizeCol,
             session.startTimeMs];
-        console.log('convertSessionToRowData::', {session, rData});
+        //console.log('convertSessionToRowData::', {session, rData});
         return rData;
     }
 
@@ -298,7 +326,7 @@
 
     // populate the sessionTable with JSON data
     function populateSessionTable(data) {
-        console.log("populating data table...", data);
+        //console.log("populating data table...", data);
         $("#sessionTable").DataTable().clear();
 
         data.forEach(function (s) {
