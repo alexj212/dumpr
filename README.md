@@ -17,15 +17,10 @@ Another ability that dumpr! has is that it can be setup to return a custom respo
 
 A match is made against the 'method' and 'path'. Any match that is made will send a response with the 'status_code', 'content-type' and 'response'. The 'method' and 'path' values can be regular expressions.
 
-The auto responder system uses a yaml file to define the rules for the auto responder. The yml file can be defined with 
+The auto responder system will be auto populated with several default rules. They are stored in the application db file.  
 
-```bash
-  --responses=responses.yaml    auto responder file
+### Rule 1:
 ```
-
-## responses.yaml 
-```.yaml
-responses:
   - method: .*
     name: rule 1
     path: /hello\.(txt|text)
@@ -33,6 +28,13 @@ responses:
     content_type: text/plain
     response: |
       Hello World!!!!
+
+```
+* Will match any http method and path with the regular expression `/hello\.(txt|text)` 
+* Will respond with status code 200, content_type `text/plain` and the response body `Hello World!!!!` 
+
+### Rule 2:
+```
   - method: .*
     name: rule 2
     path: /hello\.json
@@ -44,12 +46,6 @@ responses:
       }
 
 ```
-
-### Rule 1: 
-* Will match any http method and path with the regular expression `/hello\.(txt|text)` 
-* Will respond with status code 200, content_type `text/plain` and the response body `Hello World!!!!` 
-
-### Rule 2: 
 * Will match any http method and path with the regular expression `/hello\.json` 
 * Will respond with status code 200, content_type `text/json` and the response body `{ "message": "Hello World" }` 
 
@@ -201,9 +197,6 @@ This will launch the web server on localhost:8080 and the tcp server on 8081. A 
 
   * --publicTCPPort=8081
     * Set the public port for the tcp service. This is used for populating templates with urls or response headers.
-
-  * --responses=responses.yaml
-    * Define the auto responder file for the service. 
 
   * --export
     * Will make the application export the embedded templates to --webDir value. The application will exit once completed. The templates can then be customized. 

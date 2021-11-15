@@ -109,11 +109,12 @@ type Session struct {
 	Viewers        []*melody.Session         `json:"-"`
 	Protocol       Protocol                  `json:"protocol"`
 	MultiPartFiles map[string]*MultiPartFile `json:"multipartFiles"`
-	outputFile     *os.File
-	Active         bool             `json:"active"`
-	HTTPMethod     string           `json:"httpMethod"`
-	HTTPPath       string           `json:"httpPath"`
-	HTTPSession    *HTTPRequestJSON `json:"-"`
+	outputFile     *os.File                  `json:"-"`
+	Active         bool                      `json:"active"`
+	HTTPMethod     string                    `json:"httpMethod"`
+	HTTPPath       string                    `json:"httpPath"`
+	HandledByRule  string                    `json:"handled_by_rule"`
+	HTTPSession    *HTTPRequestJSON          `json:"-"`
 }
 
 // ApiSession struct to store details of a session to be returned via web service in json form
@@ -132,6 +133,7 @@ type ApiSession struct {
 	Age               string                    `json:"age"`
 	SessionActiveTime string                    `json:"sessionActiveTime"`
 	Description       string                    `json:"description"`
+	HandledByRule     string                    `json:"handled_by_rule"`
 	Size              *SizeResult               `json:"size"`
 }
 
@@ -152,6 +154,7 @@ func (s *Session) ToApiSession() *ApiSession {
 		StartTimeMs:       s.StartTime.Unix(),
 		SessionActiveTime: s.SessionActiveTime(),
 		Description:       s.Description(),
+		HandledByRule:     s.HandledByRule,
 		Size:              s.Size(),
 	}
 	return apiSession
@@ -289,7 +292,7 @@ func (s *Session) InitializeHTTP(req *http.Request) {
 
 	s.HTTPMethod = req.Method
 	s.HTTPPath = req.RequestURI
-	s.Active = false
+	s.Active = true
 
 	request := NewHTTPRequestJSON(req)
 	if request != nil {
@@ -298,7 +301,7 @@ func (s *Session) InitializeHTTP(req *http.Request) {
 		_, _ = s.outputFile.Write(dump)
 	}
 
-	Broadcast( SessionUpdated, s.ToApiSession())
+	Broadcast(SessionUpdated, s.ToApiSession())
 }
 
 // LoadHTTPRequestJSON load request data file from disk if it is a http based session.
@@ -421,7 +424,7 @@ func createSession(ip string) (*Session, error) {
 	session.outputFile = outputFile
 	err = StoreSession(session)
 
-	Broadcast( SessionCreated, session.ToApiSession())
+	Broadcast(SessionCreated, session.ToApiSession())
 
 	return session, err
 }
@@ -467,5 +470,5 @@ func PurgeSession(s *Session) {
 	}
 
 	delete(Sessions, s.Key)
-	Broadcast( SessionDeleted, s.Key)
+	Broadcast(SessionDeleted, s.Key)
 }

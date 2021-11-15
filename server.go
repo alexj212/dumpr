@@ -113,12 +113,12 @@ func handleConn(client net.Conn) {
 					s := time.Now().UTC().Format(http.TimeFormat)
 					response.Header["Date"] = []string{s}
 
-					autoResponse := FindAutoResponse(req)
+					autoResponse := autoResponders.Find(req)
 					if autoResponse != nil {
+						session.HandledByRule = autoResponse.Name
 						response.StatusCode = autoResponse.StatusCode
 						response.Header["Content-Type"] = []string{autoResponse.ContentType}
 						response.Header["X-AutoResponder-Name"] = []string{autoResponse.Name}
-						response.Header["X-AutoResponder-ID"] = []string{fmt.Sprintf("%d", autoResponse.ID)}
 						payload := []byte(autoResponse.Response)
 						response.Body = io.NopCloser(bytes.NewReader(payload))
 						response.ContentLength = int64(len(payload))
@@ -143,7 +143,7 @@ func handleConn(client net.Conn) {
 		}
 
 		if !sentHeader {
-			Broadcast( SessionUpdated, session.ToApiSession())
+			Broadcast(SessionUpdated, session.ToApiSession())
 			_, _ = client.Write([]byte(fmt.Sprintf("view at http://%s:%d/v/%s", *publicIP, *publicHttpPort, session.Key)))
 			sentHeader = true
 		}

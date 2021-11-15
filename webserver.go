@@ -19,7 +19,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 )
 
 func createDefaultPageData(pageName string, session *Session) gin.H {
@@ -32,10 +31,10 @@ func createDefaultPageData(pageName string, session *Session) gin.H {
 		"purgeOlderThan":          purgeOlderThan.String(),
 		"maxSessionSize":          maxSessionSize,
 		"maxSessionSizeFormatted": maxSessionSizeFormatted,
-
-		"Sessions":         GetAllSessions(),
-		"ActiveSessions":   GetActiveSessions(),
-		"InActiveSessions": GetInActiveSessions(),
+		"autoResponderCount":      autoResponders.Size(),
+		"Sessions":                GetAllSessions(),
+		"ActiveSessions":          GetActiveSessions(),
+		"InActiveSessions":        GetInActiveSessions(),
 		"add": func(a int, b int) int {
 			return a + b
 		},
@@ -114,7 +113,7 @@ func GinServer() (err error) {
 		tplFileName := fmt.Sprintf("%s%s", tplFileBaseName, config.Extension)
 
 		// fmt.Printf("templateEngine load: %s\n", tplFileName)
-		tplFile, err := assets.Open(tplFileName)
+		tplFile, err := webFS.Open(tplFileName)
 		if err != nil {
 			return "", fmt.Errorf("ViewEngine tplFileName:%v error: %v", tplFileName, err)
 		}
@@ -131,12 +130,14 @@ func GinServer() (err error) {
 	m.Upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	router.GET("/favicon.ico", func(ctx *gin.Context) {
-		ctx.FileFromFS("favicon.ico", assetsHTTPFS)
+		ctx.FileFromFS("favicon.ico", webDirHTTPFS)
 	})
 
 	router.GET("/dumpr.png", func(ctx *gin.Context) {
-		ctx.FileFromFS("dumpr.png", assetsHTTPFS)
+		ctx.FileFromFS("dumpr.png", webDirHTTPFS)
 	})
+
+	router.StaticFS("/assets/", staticDirHTTPFS)
 
 	router.GET("/", func(ctx *gin.Context) {
 		data := createDefaultPageData("Session List", nil)
@@ -167,26 +168,150 @@ func GinServer() (err error) {
 		}
 	})
 
-	router.GET("/api/autoresponder/:id", func(ctx *gin.Context) {
+	router.GET("/api/autoresponder/:name", func(ctx *gin.Context) {
 
-		idStr := ctx.Param("id")
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			ctx.JSON(404, gin.H{"code": "AutoResponder-NOT-FOUND", "message": "autoresponder not found"})
-			return
-		}
+		name := ctx.Param("name")
 
-		responder := GetAutoResponse(id)
-		if responder == nil {
-			ctx.JSON(404, gin.H{"code": "AutoResponder-NOT-FOUND", "message": "autoresponder not found"})
+		responder, ok := autoResponders.Get(name)
+		if !ok {
+			payload := gin.H{
+				"code":    "AutoResponder-NOT-FOUND",
+				"message": fmt.Sprintf("autoresponder [%s] not found", name),
+			}
+
+			ctx.JSON(404, payload)
 			return
 		}
 
 		ctx.JSON(200, responder)
 	})
+	router.DELETE("/api/autoresponder/:name", func(ctx *gin.Context) {
+		name := ctx.Param("name")
+
+		_, ok := autoResponders.Get(name)
+		if !ok {
+			payload := gin.H{
+				"result":  "failed",
+				"code":    "AutoResponder-NOT-FOUND",
+				"message": fmt.Sprintf("autoresponder [%s] not found", name),
+			}
+			ctx.JSON(404, payload)
+			return
+		}
+
+		success := autoResponders.Delete(name)
+		if !success {
+			payload := gin.H{
+				"result":  "failed",
+				"code":    "AutoResponder-NOT-FOUND",
+				"message": fmt.Sprintf("DeleteAutoResponder [%s] returned false", name),
+			}
+			ctx.JSON(404, payload)
+			return
+		}
+
+		payload := gin.H{
+			"result":  "success",
+			"code":    "SUCCESS",
+			"message": fmt.Sprintf("autoresponder [%s] deleted", name)}
+		ctx.JSON(200, payload)
+	})
+
+	router.POST("/api/autoresponder/new", func(ctx *gin.Context) {
+		var payload AutoResponse
+
+		// Call BindJSON to bind the received JSON to AutoResponse.
+		if err := ctx.BindJSON(&payload); err != nil {
+			response := gin.H{
+				"result":  "failed",
+				"code":    "AutoResponder-NOT-FOUND",
+				"message": fmt.Sprintf("unable to parse json"),
+			}
+
+			ctx.JSON(404, response)
+			return
+		}
+
+		err = autoResponders.Insert(&payload)
+		if err != nil {
+			response := gin.H{
+				"result":  "failed",
+				"code":    "AutoResponder-NOT-FOUND",
+				"message": fmt.Sprintf("autoresponder [%s] not inserted", payload.Name),
+				"error":   err.Error(),
+			}
+			ctx.JSON(404, response)
+			return
+		}
+
+		response := gin.H{
+			"result":  "success",
+			"code":    "SUCCESS",
+			"message": fmt.Sprintf("autoresponder [%s] inserted", payload.Name),
+		}
+		ctx.JSON(200, response)
+	})
+
+	router.PUT("/api/autoresponder/:name", func(ctx *gin.Context) {
+		var err error
+		name := ctx.Param("name")
+
+		fmt.Printf("autoresponder[%s]\n", name)
+		var payload AutoResponse
+		// Call BindJSON to bind the received JSON to AutoResponse.
+		if err = ctx.BindJSON(&payload); err != nil {
+			response := gin.H{
+				"result":  "failed",
+				"code":    "AutoResponder-NOT-FOUND",
+				"message": fmt.Sprintf("unable to parse json [%s]", name),
+				"err":     fmt.Errorf("%v", err),
+			}
+			ctx.JSON(404, response)
+			return
+		}
+
+		fmt.Printf("autoresponder[%s]\n", name)
+		_, ok := autoResponders.Get(name)
+		if ok {
+			err = autoResponders.Update(&payload)
+			if err != nil {
+				result := gin.H{
+					"result":  "failed",
+					"code":    "AutoResponder-NOT-FOUND",
+					"message": fmt.Sprintf("unable to update autoresponder [%s]", name),
+					"error":   err.Error(),
+				}
+
+				ctx.JSON(404, result)
+				return
+			}
+
+			result := gin.H{
+				"result":        "success",
+				"code":          "SUCCESS",
+				"message":       fmt.Sprintf("autoresponder [%s] updated", name),
+				"autoresponder": payload}
+
+			ctx.JSON(200, result)
+			return
+		}
+
+		err = autoResponders.Insert(&payload)
+		result := gin.H{
+			"result":        "success",
+			"code":          "SUCCESS",
+			"message":       fmt.Sprintf("autoresponder %s added", name),
+			"autoresponder": payload,
+		}
+
+		if err != nil {
+			result["error"] = err
+		}
+		ctx.JSON(200, result)
+	})
 
 	router.GET("/api/autoresponder/list", func(ctx *gin.Context) {
-		ctx.JSON(200, autoResponders)
+		ctx.JSON(200, autoResponders.l)
 	})
 
 	router.GET("/v/:name", func(c *gin.Context) {
@@ -276,6 +401,11 @@ func GinServer() (err error) {
 		ctx.HTML(http.StatusOK, "about", data)
 	})
 
+	router.GET("/responders", func(ctx *gin.Context) {
+		data := createDefaultPageData("dumpr! autoresponders", nil)
+		//render with master
+		ctx.HTML(http.StatusOK, "responders", data)
+	})
 	SetupSSERouter(router, "/stream")
 
 	router.NoRoute(func(c *gin.Context) {
@@ -297,10 +427,10 @@ func GinServer() (err error) {
 		url = fmt.Sprintf("http://%s:%d/api/info/%s", *publicIP, *publicHttpPort, session.Key)
 		c.Header("X-Session-Info-URL", url)
 
-		autoResponse := FindAutoResponse(c.Request)
+		autoResponse := autoResponders.Find(c.Request)
 		if autoResponse != nil {
+			session.HandledByRule = autoResponse.Name
 			c.Header("X-AutoResponder-Name", autoResponse.Name)
-			c.Header("X-AutoResponder-ID", fmt.Sprintf("%d", autoResponse.ID))
 			payload := []byte(autoResponse.Response)
 			c.Data(autoResponse.StatusCode, autoResponse.ContentType, payload)
 		} else {

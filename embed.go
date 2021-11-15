@@ -10,19 +10,21 @@ import (
 	"github.com/potakhov/loge"
 	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
 //go:embed web/*
-var staticFS embed.FS
-var staticAssets fs.FS
+var webEmbedFS embed.FS
 
 // SetupFS set up FS reference, will check if local disk version of assets exists, or will use the embedded assets if the local asset dir does not contain the same file names
 func SetupFS() (fs.FS, error) {
+	var webFS fs.FS
 	var root fs.FS
-	staticAssets, _ = fs.Sub(staticFS, "web")
+
+	webFS, _ = fs.Sub(webEmbedFS, "web")
 
 	if *webDir != "" && !*exportTemplates {
 		fi, err := os.Stat(*webDir)
@@ -31,7 +33,7 @@ func SetupFS() (fs.FS, error) {
 			file := os.DirFS(*webDir)
 
 			if file != nil {
-				invalidFiles := CompareFS(staticAssets, file)
+				invalidFiles := CompareFS(webFS, file)
 				fmt.Printf("Compared FS - found %d diffs\n", len(invalidFiles))
 
 				if len(invalidFiles) > 0 {
@@ -47,8 +49,8 @@ func SetupFS() (fs.FS, error) {
 
 	if root == nil {
 		loge.Info("using file serving from packed resources \n")
-		root = staticAssets
-		_ = walkDir(staticAssets, "static")
+		root = webFS
+		_ = walkDir(webFS, "static")
 	}
 
 	return root, nil
@@ -98,7 +100,7 @@ func copyTemplatesToTarget(target string) (err error) {
 		return
 	}
 
-	err = SaveAssets(target, staticFS, false)
+	err = SaveAssets(target, webEmbedFS, false)
 	if err != nil {
 		return err
 	}
@@ -163,4 +165,53 @@ func WriteNewFile(fpath string, in io.Reader) error {
 		return fmt.Errorf("%s: writing file: %v", fpath, err)
 	}
 	return nil
+}
+
+type embedFileSystem struct {
+	http.FileSystem
+	indexes bool
+}
+
+// Open open a file based on name
+func (e embedFileSystem) Open(name string) (http.File, error) {
+	file, err := e.FileSystem.Open(name)
+	if err != nil {
+		return nil, err
+	}
+
+	// check if indexing is allowed
+	s, _ := file.Stat()
+	if s.IsDir() && !e.indexes {
+		return nil, fmt.Errorf("dir not available")
+	}
+
+	return file, err
+}
+
+// Exists tests a path exists
+func (e embedFileSystem) Exists(prefix string, path string) bool {
+	f, err := e.Open(path)
+	if err != nil {
+		return false
+	}
+
+	// check if indexing is allowed
+	s, _ := f.Stat()
+	if s.IsDir() && !e.indexes {
+		return false
+	}
+
+	return true
+}
+
+// EmbedFolder create FileSystem from a File System and subdirectory. Has ability to disable index dirs.
+func EmbedFolder(fsEmbed fs.FS, targetPath string, index bool) http.FileSystem {
+	subFS, err := fs.Sub(fsEmbed, targetPath)
+	if err != nil {
+		panic(err)
+	}
+	return embedFileSystem{
+		FileSystem: http.FS(subFS),
+		indexes:    index,
+	}
 }

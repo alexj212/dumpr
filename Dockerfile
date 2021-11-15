@@ -9,9 +9,9 @@ RUN make dumpr
 
 RUN mkdir /app
 
-RUN bash -c 'mkdir -p {/app,/conf};cp /build/bin/dumpr /app;cp /build/responses.yaml /conf'
+RUN bash -c 'mkdir -p {/app,/conf};cp /build/bin/dumpr /app'
 
 EXPOSE 8080
 EXPOSE 8081
 
-CMD [ "/app/dumpr", "--responses=/conf/responses.yaml" ]
+CMD [ "/app/dumpr" ]

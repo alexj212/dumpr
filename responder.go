@@ -1,103 +1,186 @@
-// Copyright 2021 Alex jeannopoulos. All rights reserved.
+// Copyright 2021 Alex Jeannopoulos. All rights reserved.
 // Use of this source code is governed by the MIT
 // license that can be found in the LICENSE file.
 
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/fsnotify/fsnotify"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"net/http"
 	"regexp"
+	"sort"
 )
 
-// AutoResponses struct to store the list ofAutoResponse
+// AutoResponses struct to store map of rules and ordered list to be chcked when requests come in
 type AutoResponses struct {
-	List []*AutoResponse `yaml:"responses"`
+	m map[string]*AutoResponse
+	l []*AutoResponse
 }
 
-// AutoResponse struct to store a AutoResponse
-type AutoResponse struct {
-	ID          int            `yaml:"id"`
-	Method      string         `yaml:"method"`
-	Name        string         `yaml:"name"`
-	Path        string         `yaml:"path"`
-	StatusCode  int            `yaml:"status_code"`
-	ContentType string         `yaml:"content_type"`
-	Response    string         `yaml:"response"`
-	pathRegex   *regexp.Regexp `yaml:"-"`
+var autoResponders *AutoResponses
+
+// Sort sorts the internal list based on Index
+func (r *AutoResponses) Sort() []*AutoResponse {
+	sort.Slice(r.l, func(i, j int) bool {
+		return r.l[i].Index < r.l[j].Index
+	})
+
+	return r.l
 }
 
-var (
-	autoResponders *AutoResponses
-)
+// Save attempts to save the AutoResponses or an error
+func (r *AutoResponses) Save() error {
 
-// InitializeAutoResponders attempts to load the list of autoresponders from the file responders.yaml
-func InitializeAutoResponders() error {
-	if *responsesFile == "" {
-		return nil
+	r.l = make([]*AutoResponse, 0)
+
+	for _, v := range r.m {
+		autoResponders.l = append(autoResponders.l, v)
 	}
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		fmt.Println("ERROR", err)
-		return err
-	}
+	r.Sort()
 
-	autoResponders, err = LoadAutoResponders()
-	if err != nil {
-		fmt.Printf("Error Loading AutoResponders: %v\n", err)
-		return err
-	}
-	// out of the box file system notify, that can watch a single file, or a single directory
-	if err := watcher.Add(*responsesFile); err != nil {
-		fmt.Printf("FileWatcher add error: %v\n", err)
-		return err
-	}
-
-	go func() {
-
-		defer func() {
-			_ = watcher.Close()
-		}()
-
-		for {
-			select {
-			// watch for events
-			case event := <-watcher.Events:
-				fmt.Printf("Reloading AutoResponders file: %s\n", event.Name)
-				autoResponders, err = LoadAutoResponders()
-				if err != nil {
-					fmt.Printf("Error Loading AutoResponders: %v\n", err)
-				}
-				break
-
-				// watch for errors
-			case err := <-watcher.Errors:
-				fmt.Printf("FileWatcher error: %v\n", err)
-				break
-			}
+	var err error
+	for _, val := range r.m {
+		err = StoreResponder(val)
+		if err != nil {
+			return err
 		}
-	}()
-	return err
-}
-
-// GetAutoResponse get the AutoResponse from the list of AutoResponders
-func GetAutoResponse(i int) *AutoResponse {
-	if i > -0 && i < len(autoResponders.List) {
-		return autoResponders.List[i]
 	}
 	return nil
 }
 
-// FindAutoResponse attempts to find a match if the AutoResponse to the http.Request
-func FindAutoResponse(req *http.Request) *AutoResponse {
+// Size the number of rules
+func (r *AutoResponses) Size() int {
+	return len(r.m)
+}
+
+// Get the AutoResponse from the list of AutoResponders by name
+func (r *AutoResponses) Get(name string) (*AutoResponse, bool) {
+	val, ok := r.m[name]
+	return val, ok
+}
+
+// Delete delete the AutoResponse from the list of AutoResponders
+func (r *AutoResponses) Delete(name string) bool {
+	delete(r.m, name)
+	r.Save()
+	return true
+}
+
+// Update update an AutoResponse
+func (r *AutoResponses) Update(payload *AutoResponse) error {
+	response, ok := r.Get(payload.Name)
+	if !ok {
+		return fmt.Errorf("unable to find autoresponder %s", payload.Name)
+	}
+
+	response.Name = payload.Name
+	response.Index = payload.Index
+	response.Method = payload.Method
+	response.Path = payload.Path
+	response.StatusCode = payload.StatusCode
+	response.ContentType = payload.ContentType
+	response.Response = payload.Response
+	response.Init()
+	r.m[response.Name] = response
+	return r.Save()
+}
+
+// Insert insert new AutoResponse
+func (r *AutoResponses) Insert(payload *AutoResponse) error {
+	_, ok := r.Get(payload.Name)
+	if ok {
+		return fmt.Errorf("responder [%s] already exists", payload.Name)
+	}
+
+	response := &AutoResponse{}
+	response.Index = payload.Index
+	response.Name = payload.Name
+	response.Method = payload.Method
+	response.Path = payload.Path
+	response.StatusCode = payload.StatusCode
+	response.ContentType = payload.ContentType
+	response.Response = payload.Response
+
+	response.Init()
+	r.m[response.Name] = response
+	return r.Save()
+}
+
+// AutoResponse struct to store a AutoResponse
+type AutoResponse struct {
+	Index       int            `yaml:"index" json:"index"`
+	Method      string         `yaml:"method" json:"Method"`
+	Name        string         `yaml:"name" json:"Name"`
+	Path        string         `yaml:"path" json:"Path"`
+	StatusCode  int            `yaml:"status_code" json:"StatusCode"`
+	ContentType string         `yaml:"content_type" json:"ContentType"`
+	Response    string         `yaml:"response" json:"Response"`
+	pathRegex   *regexp.Regexp `yaml:"-" json:"-"`
+}
+
+// Bytes returns the bytes of the json formatted of the AutoResponse
+func (r *AutoResponse) Bytes() []byte {
+	dump, _ := json.MarshalIndent(r, "", "    ")
+	return dump
+}
+
+// InitializeAutoResponders attempts to load the list of autoresponders from the file responders.yaml
+func InitializeAutoResponders() error {
+	list, err := LoadResponders()
+	if err != nil {
+		fmt.Printf("Error Loading AutoResponders: %v\n", err)
+		return err
+	}
+
+	autoResponders = &AutoResponses{
+		m: list,
+		l: make([]*AutoResponse, 0),
+	}
+	for _, v := range list {
+		autoResponders.l = append(autoResponders.l, v)
+	}
+	autoResponders.Sort()
+	fmt.Printf("Loaded AutoResponders\n")
+	return err
+}
+
+// Init initialize struct
+func (r *AutoResponse) Init() {
+
+	if r.Method == "" {
+		r.Method = "GET"
+	}
+	if r.StatusCode == 0 {
+		r.StatusCode = 200
+	}
+	if r.ContentType == "" {
+		r.ContentType = "text/plain"
+	}
+	if r.Path == "" {
+		r.Path = "/.*"
+	}
+	if r.Response == "" {
+		r.ContentType = "OK"
+	}
+
+	if r.Name == "" {
+		r.Name = "My Rule"
+	}
+
+	pathRegex, err := regexp.Compile(r.Path)
+	if err == nil {
+		r.pathRegex = pathRegex
+	}
+}
+
+// Find attempts to find a match if the AutoResponse to the http.Request
+func (r *AutoResponses) Find(req *http.Request) *AutoResponse {
 	if autoResponders == nil {
 		return nil
 	}
 
-	for _, r := range autoResponders.List {
+	for _, r := range r.l {
 		matchedMethod, _ := regexp.MatchString(r.Method, req.Method)
 		matchedURI := false
 		if r.pathRegex != nil {
@@ -112,74 +195,39 @@ func FindAutoResponse(req *http.Request) *AutoResponse {
 	return nil
 }
 
-// LoadAutoResponders attempts to load the AutoResponses or an error
-func LoadAutoResponders() (*AutoResponses, error) {
+// CreateDefaultRules create slice of default rules to populate bucket with on first run
+func CreateDefaultRules() []*AutoResponse {
 
-	if *responsesFile != "" {
-		responsesContent, err := ioutil.ReadFile(*responsesFile)
-		if err != nil {
-			return nil, err
-		}
+	responders := make([]*AutoResponse, 0)
+	var responder *AutoResponse
 
-		if responsesContent != nil {
-			responses := &AutoResponses{}
-			validResponses := &AutoResponses{}
-			validResponses.List = make([]*AutoResponse, 0)
+	responder = &AutoResponse{Index: 10, Name: "Rule 1", Method: "GET", Path: "/hello.text", StatusCode: 200, ContentType: "text/plain", Response: `Hello World!!!!`}
+	responder.Init()
+	responders = append(responders, responder)
 
-			err = yaml.Unmarshal(responsesContent, responses)
-			if err == nil {
-				if responses.List == nil {
-					return nil, fmt.Errorf("responses.List is nil")
-				}
-				//fmt.Printf("len responses.List: %d\n", len(responses.List))
+	responder = &AutoResponse{Index: 20, Name: "Rule 2", Method: "GET", Path: "/hello.world", StatusCode: 200, ContentType: "text/plain", Response: `thiis is the response of multi
+	lines and will see
+	how it comes back`}
+	responder.Init()
+	responders = append(responders, responder)
 
-				for i, r := range responses.List {
-					if r == nil {
-						continue
-					}
+	responder = &AutoResponse{Index: 30, Name: "Rule 3", Method: "GET", Path: "/hello.json", StatusCode: 200, ContentType: "text/json", Response: `{
+	"message": "Hello World"
+	}`}
+	responder.Init()
+	responders = append(responders, responder)
 
-					if r.Method == "" {
-						r.Method = "GET"
-					}
-					if r.StatusCode == 0 {
-						r.StatusCode = 200
-					}
-					if r.ContentType == "" {
-						r.ContentType = "text/plain"
-					}
-					if r.Path == "" {
-						r.Path = "/.*"
-					}
-					if r.Response == "" {
-						r.ContentType = "OK"
-					}
+	responder = &AutoResponse{Index: 40, Name: "Rule 4", Method: "POST", Path: "/.*", StatusCode: 200, ContentType: "text/plain", Response: `Hello World!!!!`}
+	responder.Init()
+	responders = append(responders, responder)
 
-					if r.Name == "" {
-						r.Name = fmt.Sprintf("Rule %d", i)
-					}
-
-					r.ID = i
-					pathRegex, err := regexp.Compile(r.Path)
-					if err == nil {
-						r.pathRegex = pathRegex
-					}
-					validResponses.List = append(validResponses.List, r)
-				}
-			}
-
-			if validResponses != nil {
-				fmt.Printf("Loaded %d AutoResponders\n", len(validResponses.List))
-
-				fmt.Printf("    Method    Path\n")
-				fmt.Printf("--------------------------------------------\n")
-				for i, responder := range validResponses.List {
-					fmt.Printf("[%d] %-8s %s\n", i, responder.Method, responder.Path)
-				}
-			}
-
-			return validResponses, err
-		}
-		return nil, fmt.Errorf("%s is empty", *responsesFile)
-	}
-	return nil, nil
+	responder = &AutoResponse{Index: 50, Name: "Rule 5", Method: ".*", Path: "/api/test", StatusCode: 200, ContentType: "text/json", Response: `{
+	"ForceQuery": false,
+	"RawQuery": "",
+	"Fragment": "",
+	"RawFragment": ""
+	}`}
+	responder.Init()
+	responders = append(responders, responder)
+	return responders
 }

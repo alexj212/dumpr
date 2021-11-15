@@ -21,6 +21,5 @@ bin/
 .idea/
 .env
 dumpr.db
-responses.yaml
 scratch
 dist/

@@ -31,7 +31,6 @@ archives:
     files:
       - LICENSE
       - README.md
-      - responses.yaml
       - 'web/*'
 
     replacements:

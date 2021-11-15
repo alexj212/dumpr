@@ -1,0 +1,495 @@
+{{define "head"}}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css"/>
+<link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/buttons/2.0.0/css/buttons.dataTables.min.css"/>
+<link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/select/1.3.3/css/select.dataTables.min.css"/>
+<link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/datetime/1.1.1/css/dataTables.dateTime.min.css"/>
+<link type="text/css" rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css"/>
+
+<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.2/jquery.modal.min.css"/>
+
+
+<link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"/>
+
+
+<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+
+<style>
+    * {
+        font-family: Helvetica Neue, sans-serif;
+    }
+
+    body {
+        max-width: 900px;
+        margin: 2em auto;
+        line-height: 1.5;
+        font-size: 12px;
+    }
+
+    .vertical-alignment-helper {
+        display:table;
+        height: 100%;
+        width: 100%;
+        pointer-events:none;
+    }
+    .vertical-align-center {
+        /* To center vertically */
+        display: table-cell;
+        vertical-align: middle;
+        pointer-events:none;
+    }
+    .modal-content {
+        /* Bootstrap sets the size of the modal in the modal-dialog class, we need to inherit it */
+        width:inherit;
+        max-width:inherit; /* For Bootstrap 4 - to avoid the modal window stretching full width */
+        height:inherit;
+        /* To center horizontally */
+        margin: 0 auto;
+        pointer-events:all;
+    }
+
+
+</style>
+{{end}}
+
+{{define "content"}}
+
+
+<div class="alert alert-error" id="alert">
+    <button type="button" class="close" data-dismiss="alert">x</button>
+    <strong id="alert-title">Error! </strong> <span id="alert-message"></span>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" role="dialog" aria-labelledby="createModalTitle" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog modal-dialog-centered vertical-align-center" role="document">
+
+
+
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createModalTitle"></h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <form>
+
+                    <div class="form-group col-md-12">
+                        <label for="formNameEdit" class="form-label">Rule Name</label>
+                        <input class="form-control" id="formNameEdit" aria-describedby="formNameEditHelp">
+                    </div>
+                    <div class="form-group col-md-12">
+                        <br/>
+                        <h4>Request</h4>
+                        <hr/>
+                    </div>
+                    <div class="form-group col-md-12">
+                        <label for="formIndexEdit" class="form-label">Index</label>
+                        <input class="form-control" id="formIndexEdit">
+                        <div id="formIndexHelp" class="form-text">Rule Matching Order - lower is processed first</div>
+                    </div>
+
+                    <div class="form-group col-md-12">
+                        <label for="formMethodEdit" class="form-label">Method</label>
+                        <input class="form-control" id="formMethodEdit">
+                        <div id="formMethodHelp" class="form-text">Regular Expressions allowed.</div>
+                    </div>
+                    <div class="form-group col-md-12">
+                        <label for="formPathEdit" class="form-label">Path</label>
+                        <input class="form-control" id="formPathEdit">
+                        <div id="formPathHelp" class="form-text">Regular Expressions allowed.</div>
+
+                    </div>
+
+                    <div class="form-group col-md-12">
+                        <br/>
+                        <h4>Response</h4>
+                        <hr/>
+                    </div>
+
+                    <div class="form-group col-md-12">
+                        <label for="formStatusCodeEdit" class="form-label">Status Code</label>
+                        <input class="form-control" id="formStatusCodeEdit">
+                    </div>
+                    <div class="form-group col-md-12">
+                        <label for="formContentTypeEdit" class="form-label">Content Type</label>
+                        <input class="form-control" id="formContentTypeEdit">
+                    </div>
+
+
+
+                    <div class="form-group col-md-12">
+                        <label for="formResponseEdit" class="form-label">Response</label>
+                        <br/>
+                        <textarea  rows="5" id="formResponseEdit" class="form-control">  Contents... </textarea>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalTitle" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+    <div class="modal-dialog modal-dialog-centered vertical-align-center" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalTitle"></h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <input type="hidden" id="formDelName"/>
+                </form>
+
+                <p>You are about to delete <span id="delFormRuleName"></span>, this procedure is irreversible.</p>
+                <p>Do you want to proceed?</p>
+                <p class="debug-url"></p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal"  data-bs-dismiss="modal">Cancel</button>
+                <a class="btn btn-danger btn-ok">Delete</a>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+
+
+
+<div id="header" style="width: 100%;height: 50px;">
+
+    <div style="width: 50%; height: 100px; float: left; ">
+        <h2><a href="/" style="text-decoration: none">dumpr!&nbsp;&nbsp;<img width="40" src="/dumpr.png"></a> </h2>
+    </div>
+
+    <div id="header2" style="margin-left: 50%; height: 100px; text-align:right;text-overflow:ellipsis;">
+        <p id='err'/>
+        <p><button onclick="addNewResponder();" type="button" class="editor-create"><i class="fa fa-plus"></i>&nbsp; Add New</button></p>
+    </div>
+
+</div>
+
+<table
+        id="autorespondersTable"
+        class="table table-striped table-bordered dt-responsive nowrap autorespondersTable" style="width:100%">
+
+    <thead>
+    <tr>
+        <th>Auto Responders</th>
+    </tr>
+    <tr>
+        <th>Name</th>
+        <th>Index</th>
+        <th>Method</th>
+        <th>Path</th>
+        <th>StatusCode</th>
+        <th>ContentType</th>
+        <th>Response</th>
+        <th class="no-sort">Actions</th>
+    </tr>
+    </thead>
+    <tbody id="autorespondersTableBody">
+    </tbody>
+</table>
+<br/>
+<br/>
+
+
+
+
+
+
+
+
+<script src="https://code.jquery.com/jquery.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.2/jquery.modal.min.js"></script>
+
+
+<script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.0.0/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.3/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.3/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+
+    $("#alert").hide();
+
+    let autorespondersTable = null;
+
+    function showAlert(mode, message){
+        console.log(message)
+
+        $("#alert-title").html(mode+" title")
+        $("#alert-message").html(message)
+
+        $("#alert").fadeTo(2000, 500).slideUp(500, function() {
+            $("#alert").slideUp(500);
+        });
+    }
+
+
+    let counter =0;
+    $(document).ready(function() {
+        $("#deleteModal").on("click",".btn-ok", function(){
+            console.log('deleteModal:: ');
+            let name = $("#formDelName").val();
+            console.log("delete ok: name: "+name);
+
+            $('#deleteModal').modal('hide')
+
+            // router.DELETE("/api/autoresponder/:id", func(ctx *gin.Context) {
+
+
+            $.ajax({
+                type: "DELETE",
+                url: "/api/autoresponder/"+name,
+                data: "",
+                success: function(json){
+                    console.log("DELETE ", json)
+                    showAlert("success", "delete success");
+                    loadData();
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    showAlert("error", "delete error");
+                }
+            });
+        });
+
+        $("#createModal").on("click",".btn-primary", function(){
+            $('#createModal').modal('hide')
+
+
+            let index = $("#formIndexEdit").val();
+            let name = $("#formNameEdit").val();
+            let method = $("#formMethodEdit").val();
+            let path = $("#formPathEdit").val();
+            let statusCode = $("#formStatusCodeEdit").val();
+            let contentType = $("#formContentTypeEdit").val();
+            let response = $("#formResponseEdit").val();
+
+
+
+            let payload = {Index: Number(index), Method: method, Name:name, Path:path, StatusCode:Number(statusCode),ContentType:contentType,Response:response}
+
+            let url=null;
+            console.log("PUT ", payload)
+
+                url = "/api/autoresponder/"+encodeURIComponent(name);
+
+                $.ajax({
+                    type: "PUT",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+
+                    url: url,
+                    data: JSON.stringify(payload),
+                    success: function(json){
+                        console.log("PUT ", json)
+
+                        showAlert("success", "autoresponder edit success");
+                        loadData();
+                    },
+                    error: function(XMLHttpRequest, textStatus, errorThrown) {
+                        showAlert("error", "autoresponder edit error");
+                    }
+                });
+
+        });
+
+        autorespondersTable = $('#autorespondersTable').DataTable({
+            "deferRender": true,
+            "lengthChange": false,
+
+            "paging":   true,
+            "bLengthChange": false,
+            "bPaginate": false,
+            "bFilter": true,
+            "bInfo": true,
+            "bAutoWidth": false,
+            "ordering": true,
+            "info":     true,
+            fixedColumns: true,
+            "columnDefs": [
+                {
+                    "targets": [ 1 ],
+                    "orderData": [ 1, 0 ],
+                    width: 200,
+                }, {
+                    "targets": [ 4 ],
+                    "orderData": [ 4, 0 ]
+                }, {
+                    "targets": [ 5 ],
+                    width: 100,
+                }
+            ],
+            "order": [[ 1, "asc" ]],
+        })
+
+
+        // Edit record
+        $('#autorespondersTable').on('click', 'button.editor-edit', function (e) {
+            e.preventDefault();
+            let row =  $(this).closest('tr');
+            let data = autorespondersTable.row( row ).data()
+            console.log('edit row', row);
+            console.log('edit', data);
+
+            let i=0;
+            let name = data[i++];
+            let index = data[i++];
+            let method = data[i++];
+            let path = data[i++];
+            let statusCode = data[i++];
+            let contentType = data[i++];
+            let response = data[i++];
+            if ( response.startsWith("<pre>")){
+                response= response.substring(5)
+            }
+            if ( response.endsWith("</pre>")){
+                response= response.substring(0, response.length - 6)
+            }
+
+            console.log('edit', name);
+
+
+            $("#formNameEdit").val(name);
+            $("#formIndexEdit").val(index);
+            $("#formMethodEdit").val(method);
+            $("#formPathEdit").val(path);
+            $("#formStatusCodeEdit").val(statusCode);
+            $("#formContentTypeEdit").val(contentType);
+            $("#formResponseEdit").val(response);
+            $("#createModalTitle").html("Edit Rule");
+            $( "#formNameEdit" ).prop( "disabled", true );
+
+            $('#createModal').modal('show')
+        } );
+
+        // Delete a record
+        $('#autorespondersTable').on('click', 'button.editor-delete', function (e) {
+            e.preventDefault();
+            let row =  $(this).closest('tr');
+            let data = autorespondersTable.row( row ).data()
+            let name = data[0];
+
+            console.log("Delete clicked: ["+name+"]")
+            $("#delFormRuleName").html(`<b>${name}</b>`);
+            $("#formDelName").val(name);
+
+            $('#deleteModal').modal('show')
+        } );
+        
+        
+        loadData();
+
+
+    })
+
+    function loadData() {
+
+        $.ajax({
+            type: 'GET',
+            url: '/api/autoresponder/list',
+            contentType: "text/plain",
+            dataType: 'json',
+            success: function (data) {
+                populateResponders(data);
+            },
+            error: function (e) {
+                console.log("There was an error with your request...");
+                console.log("error: " + JSON.stringify(e));
+            }
+        });
+    }
+
+
+    function addNewResponder(){
+        console.log("addNewResponder");
+        $("#formID").val("-1");
+        $("#formNameEdit").val("My New Rule");
+        $("#formIndexEdit").val("99");
+        $("#formMethodEdit").val("GET");
+        $("#formPathEdit").val("/");
+        $("#formStatusCodeEdit").val(200);
+        $("#formContentTypeEdit").val("text/plain");
+        $("#formResponseEdit").val("hello world");
+        $("#createModalTitle").html("Add New Rule");
+        $( "#formNameEdit" ).prop( "disabled", false );
+        $('#createModal').modal('show')
+    }
+
+
+
+    // populate the autorespondersTable with JSON data
+    function populateResponders(data) {
+
+        //console.log("populating data table...", data);
+        let table = $("#autorespondersTable").DataTable().clear();
+        console.log('autoresponder:table', table);
+        console.log('autoresponder:', data);
+
+        for (let i = 0; i < data.length; i++) {
+            let responder = data[i];
+            console.log(`key= ${name} value = ${responder}`)
+            const tr = $(`<tr>
+                        <td>${responder.Name}</td>
+                        <td>${responder.index}</td>
+                        <td>${responder.Method}</td>
+                        <td>${responder.Path}</td>
+                        <td>${responder.StatusCode}</td>
+                        <td>${responder.ContentType}</td>
+                        <td><pre>${responder.Response}</pre></td>
+                        <td>
+                            <button type="button" class="dt-center editor-edit"><i class="fa fa-edit"></i></button>
+                            <button type="button" class="dt-center editor-delete"><i class="fa fa-trash"></i></button>
+                        </td>
+                      </tr>`);
+
+            autorespondersTable.row.add(tr[0]).draw();
+
+        }
+
+
+    }
+</script>
+
+{{end}}
+
+
+
