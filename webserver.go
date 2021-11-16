@@ -270,7 +270,7 @@ func GinServer() (err error) {
 			return
 		}
 
-		fmt.Printf("autoresponder[%s]\n", name)
+		// fmt.Printf("autoresponder[%s]\n", name)
 		_, ok := autoResponders.Get(name)
 		if ok {
 			err = autoResponders.Update(&payload)
@@ -285,6 +285,8 @@ func GinServer() (err error) {
 				ctx.JSON(404, result)
 				return
 			}
+
+			fmt.Printf("autoresponder[%s] %s\n", name, payload.String() )
 
 			result := gin.H{
 				"result":        "success",
@@ -419,7 +421,7 @@ func GinServer() (err error) {
 		}
 
 		session.InitializeHTTP(c.Request)
-		deactivateSession(session)
+
 
 		c.Header("X-Session-Key", session.Key)
 		url := fmt.Sprintf("http://%s:%d/t/%s", *publicIP, *publicHttpPort, session.Key)
@@ -430,13 +432,24 @@ func GinServer() (err error) {
 		autoResponse := autoResponders.Find(c.Request)
 		if autoResponse != nil {
 			session.HandledByRule = autoResponse.Name
+		}
+		deactivateSession(session)
+
+		if autoResponse != nil {
 			c.Header("X-AutoResponder-Name", autoResponse.Name)
+			if autoResponse.ResponseHeaders != nil {
+				for k, v := range autoResponse.ResponseHeaders{
+					c.Header(k, v)
+				}
+			}
+
 			payload := []byte(autoResponse.Response)
 			c.Data(autoResponse.StatusCode, autoResponse.ContentType, payload)
 		} else {
 			sessionInfo := createNewSessionResponse(session)
 			c.Render(200, render.JSON{Data: sessionInfo})
 		}
+
 	})
 
 	m.HandleConnect(func(s *melody.Session) {

@@ -116,9 +116,19 @@ func handleConn(client net.Conn) {
 					autoResponse := autoResponders.Find(req)
 					if autoResponse != nil {
 						session.HandledByRule = autoResponse.Name
+					}
+
+					if autoResponse != nil {
 						response.StatusCode = autoResponse.StatusCode
 						response.Header["Content-Type"] = []string{autoResponse.ContentType}
 						response.Header["X-AutoResponder-Name"] = []string{autoResponse.Name}
+
+						if autoResponse.ResponseHeaders != nil {
+							for k, v := range autoResponse.ResponseHeaders{
+								response.Header[k] = []string{v}
+							}
+						}
+
 						payload := []byte(autoResponse.Response)
 						response.Body = io.NopCloser(bytes.NewReader(payload))
 						response.ContentLength = int64(len(payload))

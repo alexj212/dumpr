@@ -249,6 +249,13 @@ func (s *Session) Bytes() []byte {
 	return dump
 }
 
+// String returns the string of the json formatted of the Session
+func (s *Session) String() string {
+	dump, _ := json.MarshalIndent(s, "", "    ")
+	return string(dump)
+}
+
+
 // IsValid returns state of the session, if the assets of the Session do not exist, will return false
 func (s *Session) IsValid() (bool, error) {
 	valid := FileExists(s.SaveFile)
