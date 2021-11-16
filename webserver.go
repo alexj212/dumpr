@@ -286,7 +286,7 @@ func GinServer() (err error) {
 				return
 			}
 
-			fmt.Printf("autoresponder[%s] %s\n", name, payload.String() )
+			fmt.Printf("autoresponder[%s] %s\n", name, payload.String())
 
 			result := gin.H{
 				"result":        "success",
@@ -422,7 +422,6 @@ func GinServer() (err error) {
 
 		session.InitializeHTTP(c.Request)
 
-
 		c.Header("X-Session-Key", session.Key)
 		url := fmt.Sprintf("http://%s:%d/t/%s", *publicIP, *publicHttpPort, session.Key)
 		c.Header("X-Session-URL", url)
@@ -438,7 +437,7 @@ func GinServer() (err error) {
 		if autoResponse != nil {
 			c.Header("X-AutoResponder-Name", autoResponse.Name)
 			if autoResponse.ResponseHeaders != nil {
-				for k, v := range autoResponse.ResponseHeaders{
+				for k, v := range autoResponse.ResponseHeaders {
 					c.Header(k, v)
 				}
 			}

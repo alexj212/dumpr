@@ -124,7 +124,7 @@ func handleConn(client net.Conn) {
 						response.Header["X-AutoResponder-Name"] = []string{autoResponse.Name}
 
 						if autoResponse.ResponseHeaders != nil {
-							for k, v := range autoResponse.ResponseHeaders{
+							for k, v := range autoResponse.ResponseHeaders {
 								response.Header[k] = []string{v}
 							}
 						}
