@@ -11,7 +11,7 @@ builds:
       - goos: windows
         goarch: arm64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X main.builtBy=goreleaser
+      - -s -w -X main.Version={{.Version}} -X main.Branch={{.Branch}} -X main.LatestCommit={{.FullCommit}} -X main.CommitDate={{ .CommitDate }} -X main.BuiltBy=goreleaser  -X "main.GitRepo={{.GitURL}}" -X "main.BuildDate={{.Date}}"
 
 archives:
   # Archive name template.
@@ -20,13 +20,13 @@ archives:
   #   - `{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}`
   # - if format is `binary`:
   #   - `{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}`
-
+  # - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
     wrap_in_directory: true
 
     # ID of this archive.
     # Defaults to `default`.
-    id: dumpr
+    id: dumprcd du
 
     files:
       - LICENSE

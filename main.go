@@ -25,23 +25,23 @@ var (
 	// BuildDate date string of when build was performed filled in by -X compile flag
 	BuildDate string
 
-	// LatestCommit date string of when build was performed filled in by -X compile flag
-	LatestCommit string
-
 	// GitRepo string of the git repo url when build was performed filled in by -X compile flag
 	GitRepo string
 
-	// BuildNumber date string of when build was performed filled in by -X compile flag
-	BuildNumber string
+	// BuiltBy date string of who performed buildfilled in by -X compile flag
+	BuiltBy string
 
-	// BuiltOnIP date string of when build was performed filled in by -X compile flag
-	BuiltOnIP string
+	// CommitDate date string of when commit of the build was performed filled in by -X compile flag
+	CommitDate string
 
-	// BuiltOnOs date string of when build was performed filled in by -X compile flag
-	BuiltOnOs string
+	// Branch string of branch in the git repo filled in by -X compile flag
+	Branch string
 
-	// RuntimeVer date string of when build was performed filled in by -X compile flag
-	RuntimeVer string
+	// LatestCommit date string of when build was performed filled in by -X compile flag
+	LatestCommit string
+
+	// Version string of build filled in by -X compile flag
+	Version string
 
 	// OsSignal signal used to shut down
 	OsSignal chan os.Signal
@@ -75,6 +75,8 @@ func init() {
 	goopt.Description = func() string {
 		return "Http and TCP logger endpoint"
 	}
+	goopt.Author = "Alex Jeannopoulos"
+	goopt.ExtraUsage=``
 	goopt.Summary = `
 dumpr
         dumpr will create and http and tcp listener and log connections and inbound traffic to a log file.
@@ -82,15 +84,16 @@ dumpr
 `
 
 	goopt.Version = fmt.Sprintf(
-		`Application build information
-  Build date      : %s
-  Build number    : %s
+		`dumpr! build information
+
+  Version         : %s
   Git repo        : %s
   Git commit      : %s
-  Runtime version : %s
-  Built on OS     : %s
-  Built on IP     : %s
-`, BuildDate, BuildNumber, GitRepo, LatestCommit, RuntimeVer, BuiltOnOs, BuiltOnIP)
+  Git branch      : %s
+  Commit date     : %s
+  Build date      : %s
+  Built By        : %s
+`,Version, GitRepo, LatestCommit, Branch, CommitDate, BuildDate, BuiltBy)
 
 	//Parse options
 	goopt.Parse(nil)
