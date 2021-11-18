@@ -13,10 +13,14 @@ export BUILT_ON_IP := $(shell [ $$(uname) = Linux ] && hostname -i || hostname )
 export RUNTIME_VER := $(shell go version)
 export BUILT_ON_OS=$(shell uname -a)
 
-export LATEST_COMMIT := $(shell git log --pretty=format:'%h' -n 1 2> /dev/null)
+export LATEST_COMMIT := $(shell git rev-parse HEAD 2> /dev/null)
 export COMMIT_CNT := $(shell git rev-list --all 2> /dev/null | wc -l | sed 's/ //g' )
 export BRANCH := $(shell git branch  2> /dev/null |grep -v "no branch"| grep \*|cut -d ' ' -f2)
 export GIT_REPO := $(shell git config --get remote.origin.url  2> /dev/null)
+export COMMIT_DATE := $(shell git log -1 --format=%cd  2> /dev/null)
+
+export BUILT_BY := $(shell whoami  2> /dev/null)
+export VERSION=v0.0.0
 
 
 ifeq ($(BRANCH),)
@@ -31,12 +35,13 @@ export BUILD_NUMBER := ${BRANCH}-${COMMIT_CNT}
 
 
 export COMPILE_LDFLAGS=-s -X "main.BuildDate=${DATE}" \
-                          -X "main.LatestCommit=${LATEST_COMMIT}" \
                           -X "main.GitRepo=${GIT_REPO}" \
-                          -X "main.BuildNumber=${BUILD_NUMBER}" \
-                          -X "main.BuiltOnIP=${BUILT_ON_IP}" \
-                          -X "main.BuiltOnOs=${BUILT_ON_OS}" \
-						  -X "main.RuntimeVer=${RUNTIME_VER}"
+                          -X "main.BuiltBy=${BUILT_BY}" \
+                          -X "main.CommitDate=${COMMIT_DATE}" \
+                          -X "main.LatestCommit=${LATEST_COMMIT}" \
+                          -X "main.Branch=${BRANCH}" \
+						  -X "main.Version=${VERSION}"
+
 
 build_info: check_prereq ## Build the container
 	@echo ''

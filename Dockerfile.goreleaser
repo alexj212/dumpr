@@ -1,0 +1,10 @@
+# Dockerfile.goreleaser
+
+FROM alpine
+RUN mkdir /app
+COPY . /app
+
+EXPOSE 8080
+EXPOSE 8081
+
+ENTRYPOINT ["/app/dumpr"]

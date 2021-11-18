@@ -4,6 +4,7 @@ FROM golang:1.17
 WORKDIR /build
 COPY ./ /build
 
+RUN ls -latr /build
 RUN go mod download
 RUN make dumpr
 
