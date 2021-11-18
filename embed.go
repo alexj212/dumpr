@@ -29,7 +29,7 @@ func SetupFS() (fs.FS, error) {
 	if *webDir != "" && !*exportTemplates {
 		fi, err := os.Stat(*webDir)
 		if err !=nil {
-			loge.Info("unable to serve web assets from %d dir %v\n", *webDir, err)
+			loge.Info("unable to serve web assets from %s dir %v\n", *webDir, err)
 		}
 
 		if err == nil && fi.IsDir() {

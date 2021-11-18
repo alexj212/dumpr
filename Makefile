@@ -149,7 +149,7 @@ release: clean # create a release
 release-snapshot: # create release snapshot
 	goreleaser release --snapshot --skip-publish --rm-dist
 
-goreleaser-debug: # create release snapshot
+release-debug: # create release snapshot
 	goreleaser release --snapshot --skip-publish --rm-dist --debug
 
 
