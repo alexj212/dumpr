@@ -28,6 +28,10 @@ func SetupFS() (fs.FS, error) {
 
 	if *webDir != "" && !*exportTemplates {
 		fi, err := os.Stat(*webDir)
+		if err !=nil {
+			loge.Info("unable to serve web assets from %d dir %v\n", *webDir, err)
+		}
+
 		if err == nil && fi.IsDir() {
 
 			file := os.DirFS(*webDir)
@@ -44,6 +48,8 @@ func SetupFS() (fs.FS, error) {
 				loge.Info("using file serving from local disk: %v\n", file)
 				_ = walkDir(file, "local")
 			}
+		} else {
+			loge.Info("unable to serve web assets from local dir %v\n", *webDir)
 		}
 	}
 

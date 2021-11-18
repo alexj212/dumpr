@@ -149,6 +149,10 @@ release: clean # create a release
 release-snapshot: # create release snapshot
 	goreleaser release --snapshot --skip-publish --rm-dist
 
+goreleaser-debug: # create release snapshot
+	goreleaser release --snapshot --skip-publish --rm-dist --debug
+
+
 tools: ## install dependent tools for code analysis
 	go install github.com/gordonklaus/ineffassign@latest
 	go install github.com/fzipp/gocyclo/cmd/gocyclo@latest

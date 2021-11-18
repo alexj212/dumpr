@@ -3,6 +3,7 @@
 FROM alpine
 RUN mkdir /app
 COPY . /app
+RUN find /app
 
 EXPOSE 8080
 EXPOSE 8081
