@@ -1,0 +1,230 @@
+{{define "head"}}
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"/>
+<style>
+    body {
+        max-width: 900px;
+        margin: 2em auto;
+        line-height: 1.5;
+        font-size: 12px;
+    }
+
+    * {
+        font-family: Helvetica Neue, sans-serif;
+    }
+
+    .session-active-true {
+        color: green;
+    }
+    .session-active-false {
+        color: black
+    }
+
+    pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+    .string { color: green; }
+    .number { color: darkorange; }
+    .boolean { color: blue; }
+    .null { color: magenta; }
+    .key { color: red; }
+
+</style>
+
+{{end}}
+
+{{define "content"}}
+<h1>dumpr! <img width="40" src="/dumpr.png"></h1>
+<p><a href="/">Session List</a></p>
+<hr/>
+<br/>
+<div id="session_details"></div>
+<pre id="session_body"></pre>
+
+<script src="https://code.jquery.com/jquery.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+
+<script>
+    $(function() {
+        console.log( "ready!" );
+        loadData();
+    })
+
+    function loadData() {
+
+        $.ajax({
+            type: 'GET',
+            url: '/t/{{.session.Key}}',
+            contentType: "text/plain",
+            dataType: 'json',
+            success: function (data) {
+                populateSession(data);
+            },
+            error: function (e) {
+                console.log("There was an error with your request...");
+                console.log("error: " + JSON.stringify(e));
+            }
+        });
+    }
+
+    function populateSession(data) {
+        console.log(data);
+
+        let details = `
+<pre>
+Method: ${data.Method}
+RequestURI: ${data.RequestURI}
+Proto: ${data.Proto}
+Time: ${data.Time}
+RequestURI: ${data.RequestURI}
+Host: ${data.Host}
+RemoteAddr: ${data.RemoteAddr}
+
+
+`
+
+        if (data.TransferEncoding && Object.keys(data.TransferEncoding).length>0){
+            for (let i = 0; i < data.TransferEncoding.length; i++) {
+                console.log(data.TransferEncoding[i]);
+                details= details+`TransferEncoding[${i}] ${details.TransferEncoding[i]}\n`;
+            }
+            details= details+"\n\n";
+        }
+
+        if (data.Header && Object.keys(data.Header).length>0){
+            for (const property in data.Header) {
+                console.log(`${property}: ${data.Header[property]}`);
+                details= details+`Header[${property}] ${data.Header[property]}\n`;
+            }
+            details= details+"\n\n";
+        }
+
+        if (data.Form && Object.keys(data.Form).length>0){
+            for (const property in data.Form) {
+                console.log(`${property}: ${data.Form[property]}`);
+                details= details+`Form[${property}] ${data.Form[property]}\n`;
+            }
+            details= details+"\n\n";
+        }
+
+        if (data.PostForm && Object.keys(data.PostForm).length>0){
+            for (const property in data.PostForm) {
+                console.log(`${property}: ${data.PostForm[property]}`);
+                details= details+`PostForm[${property}] ${data.PostForm[property]}\n`;
+            }
+            details= details+"\n\n";
+        }
+
+        if (data.MultipartForm){
+            for (const name in data.MultipartForm.Value) {
+                const value_array = data.MultipartForm.Value[name]
+                for (let i = 0; i < value_array.length; i++) {
+                    details = details + `MultipartForm[${name}] ${value_array[i]}\n`;
+                }
+            }
+            details= details+"\n\n";
+            for (const name in data.MultipartForm.File) {
+                const files_list = data.MultipartForm.File[name]
+                for (let i = 0; i < files_list.length; i++) {
+                    const fileInfo = files_list[i]
+                    details= details+`MultipartForm.File[${name}][${i}] ${fileInfo.Filename} ${fileInfo.Size}\n`;
+
+                    for (const header_name in fileInfo.Header) {
+                        const header_value = fileInfo.Header[header_name];
+
+                        details= details+`MultipartForm.File[${name}][${i}]HEADER ${header_name} ${header_value}\n`;
+                    }
+                }
+            }
+        }
+
+
+        details= details+"</pre>";
+        $("#session_details").html(details);
+
+        if (data.Body){
+            const body = atob(data.Body);
+
+            if ( isJson(body)){
+                $("#session_body").html( formatJsonString(body));
+            } else {
+                $("#session_body").html(body);
+            }
+        }
+    }
+
+    function formatJsonString(jsonString){
+        const jsonPretty = JSON.stringify(JSON.parse(jsonString),null,2);
+        return syntaxHighlight(jsonPretty);
+    }
+
+    function syntaxHighlight(json) {
+        if (typeof json != 'string') {
+            json = JSON.stringify(json, undefined, 2);
+        }
+
+
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            var cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+
+    function isJson(str) {
+        try {
+            JSON.parse(str);
+        } catch (e) {
+            return false;
+        }
+        return true;
+    }
+
+/*
+type HTTPRequestJSON struct {
+
+
+
+
+	    *multipart.Form     `json:"MultipartForm"`
+
+}
+
+
+
+        type Form struct {
+            Value map[string][]string
+            File  map[string][]*FileHeader
+        }
+
+
+
+// A FileHeader describes a file part of a multipart request.
+type FileHeader struct {
+	Filename string
+	   textproto.MIMEHeader
+	     int64
+
+	content []byte
+	tmpfile string
+}
+
+ */
+
+
+
+</script>
+
+{{end}}
+
+

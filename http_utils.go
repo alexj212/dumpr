@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"os/signal"
 	"syscall"
 	"time"
@@ -23,7 +22,7 @@ const JavascriptISOString = "2006-01-02T15:04:05.999Z07:00"
 type HTTPRequestJSON struct {
 	Time             string              `json:"Time"`
 	Method           string              `json:"Method"`
-	URL              *url.URL            `json:"URL"`
+	Path             string              `json:"Path"`
 	Proto            string              `json:"Proto"`
 	ProtoMajor       int                 `json:"ProtoMajor"`
 	ProtoMinor       int                 `json:"ProtoMinor"`
@@ -52,7 +51,7 @@ func NewHTTPRequestJSON(r *http.Request) *HTTPRequestJSON {
 	request := &HTTPRequestJSON{
 		Time:             time.Now().UTC().Format(JavascriptISOString),
 		Method:           r.Method,
-		URL:              r.URL,
+		Path:              r.URL.Path,
 		Proto:            r.Proto,
 		ProtoMajor:       r.ProtoMajor,
 		ProtoMinor:       r.ProtoMinor,

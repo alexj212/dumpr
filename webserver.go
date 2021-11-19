@@ -326,9 +326,13 @@ func GinServer() (err error) {
 			return
 		}
 		data := createDefaultPageData("session details!", session)
-		data["sse_url"] = "./ws"
 
-		c.HTML(http.StatusOK, "live_view", data)
+		if session.Protocol == HTTP {
+			c.HTML(http.StatusOK, "http_view", data)
+		} else {
+			data["sse_url"] = "./ws"
+			c.HTML(http.StatusOK, "live_view", data)
+		}
 	})
 
 	router.GET("/t/:name/:filename", func(c *gin.Context) {

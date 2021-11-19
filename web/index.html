@@ -145,12 +145,12 @@
     })
 
 
-    var reconnectFrequencySeconds = 1;
-    var evtSource;
+    let reconnectFrequencySeconds = 1;
+    let evtSource;
 
     // Putting these functions in extra variables is just for the sake of readability
-    var waitFunc = function() { return reconnectFrequencySeconds * 1000 };
-    var tryToSetupFunc = function() {
+    let waitFunc = function() { return reconnectFrequencySeconds * 1000 };
+    let tryToSetupFunc = function() {
         setupEventSource();
         reconnectFrequencySeconds *= 2;
         console.log("tryToSetupFunc reconnectFrequencySeconds: "+reconnectFrequencySeconds);
@@ -159,7 +159,7 @@
         }
     };
 
-    var reconnectFunc = function() {
+    let reconnectFunc = function() {
         console.log("reconnectFunc reconnectFrequencySeconds: "+reconnectFrequencySeconds);
         setTimeout(tryToSetupFunc, waitFunc())
     };
@@ -300,7 +300,7 @@
 
         sizeCol = session.size.FormattedVal;
 
-        var rData = [
+        let rData = [
             session.key,
             timeCol,
             ipCol,
