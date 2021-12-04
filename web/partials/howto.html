@@ -2,17 +2,18 @@
 <p>Start capturing http and tcp sessions now. Try one of the example commands to start capturing.</p>
 
 <h5>httpie</h5>
+
 <pre>
-    http -f POST http://{{.publicIP}}:{{.publicTCPPort}}/hello.world  files@avatar.png
+    http -f POST {{.publicHttpProtocol}}://{{.publicIP}}:{{.publicTCPPort}}/hello.world  files@avatar.png
         post a multipart form to the endpoint http://{{.publicIP}}:{{.publicHttpPort}}/hello.world
 
-    http -f POST http://{{.publicIP}}:{{.publicHttpPort}}/hello.text
+    http -f POST {{.publicHttpProtocol}}://{{.publicIP}}:{{.publicHttpPort}}/hello.text
         post to the url
 
-    http -f POST http://{{.publicIP}}:{{.publicTCPPort}}/hello.json
+    http -f POST {{.publicHttpProtocol}}://{{.publicIP}}:{{.publicTCPPort}}/hello.json
         post to the url
 
-    http PUT http://{{.publicIP}}:{{.publicTCPPort}}/api/test --raw 'aaaaaaa'
+    http PUT {{.publicHttpProtocol}}://{{.publicIP}}:{{.publicTCPPort}}/api/test --raw 'aaaaaaa'
         put to the url with a body of 'aaaaaaa'
 
     ticker.sh|nc {{.publicIP}} {{.publicTCPPort}}

@@ -25,6 +25,7 @@ func createDefaultPageData(pageName string, session *Session) gin.H {
 	data := gin.H{
 		"title":                   pageName,
 		"publicIP":                *publicIP,
+		"publicHttpProtocol":      *publicHttpProtocol,
 		"publicHttpPort":          *publicHttpPort,
 		"publicTCPPort":           *publicTCPPort,
 		"httpPort":                *httpPort,

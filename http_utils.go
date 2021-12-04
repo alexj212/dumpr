@@ -51,7 +51,7 @@ func NewHTTPRequestJSON(r *http.Request) *HTTPRequestJSON {
 	request := &HTTPRequestJSON{
 		Time:             time.Now().UTC().Format(JavascriptISOString),
 		Method:           r.Method,
-		Path:              r.URL.Path,
+		Path:             r.URL.Path,
 		Proto:            r.Proto,
 		ProtoMajor:       r.ProtoMajor,
 		ProtoMinor:       r.ProtoMinor,
