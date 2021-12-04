@@ -218,7 +218,7 @@ func CreateDefaultRules() []*AutoResponse {
 	responder.Init()
 	responders = append(responders, responder)
 
-	responder = &AutoResponse{Index: 20, Name: "Rule 2", Method: "GET", Path: "/hello.world", StatusCode: 200, ContentType: "text/plain", Response: `thiis is the response of multi
+	responder = &AutoResponse{Index: 20, Name: "Rule 2", Method: "GET", Path: "/hello.world", StatusCode: 200, ContentType: "text/plain", Response: `this is the response of multi
 	lines and will see
 	how it comes back`}
 	responder.Init()
@@ -232,11 +232,11 @@ func CreateDefaultRules() []*AutoResponse {
 	responder.Init()
 	responders = append(responders, responder)
 
-	responder = &AutoResponse{Index: 40, Name: "Rule 4", Method: "POST", Path: "/.*", StatusCode: 200, ContentType: "text/plain", Response: `Hello World!!!!`}
+	responder = &AutoResponse{Index: 40, Name: "Rule 4", Method: "POST", Path: "/hello.post", StatusCode: 200, ContentType: "text/plain", Response: `Hello World!!!!`}
 	responder.Init()
 	responders = append(responders, responder)
 
-	responder = &AutoResponse{Index: 50, Name: "Rule 5", Method: ".*", Path: "/api/test", StatusCode: 200, ContentType: "text/json", Response: `{
+	responder = &AutoResponse{Index: 50, Name: "Rule 5", Method: ".*", Path: "/hello/test", StatusCode: 200, ContentType: "text/json", Response: `{
 	"ForceQuery": false,
 	"RawQuery": "",
 	"Fragment": "",
