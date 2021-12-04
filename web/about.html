@@ -18,9 +18,9 @@
 {{include "partials/howto"}}
 
 <p><a href="/" style="text-decoration: none">View Captured Sessions</a></p>
+<br/>
+<h1>Web Service Urls</h1>
 <pre>
-
-
 /                           - html listing of sessions
 /about                      - about the project
 /t/:name                    - return the log file for a session.
@@ -33,5 +33,21 @@
 /api/info/:name             - return json structure of the session.
 /api/autoresponder/:id      - return auto responder for rule id.
 /api/autoresponder/list     - return list of all auto responders.
-    </pre>
+</pre>
+
+<h1>Build Info</h1>
+
+<pre>
+BuildDate:   {{.BuildDate}}
+GitRepo:     {{.GitRepo}}
+BuiltBy:     {{.BuiltBy}}
+CommitDate:  {{.CommitDate}}
+LatestCommit:{{.LatestCommit}}
+Branch:      {{.Branch}}
+Version:     {{.Version}}
+</pre>
+
+
+
+
 {{end}}

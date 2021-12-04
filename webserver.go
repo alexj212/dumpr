@@ -36,6 +36,13 @@ func createDefaultPageData(pageName string, session *Session) gin.H {
 		"Sessions":                GetAllSessions(),
 		"ActiveSessions":          GetActiveSessions(),
 		"InActiveSessions":        GetInActiveSessions(),
+		"BuildDate":               BuildDate,
+		"GitRepo":                 GitRepo,
+		"BuiltBy":                 BuiltBy,
+		"CommitDate":              CommitDate,
+		"LatestCommit":            LatestCommit,
+		"Branch":                  Branch,
+		"Version":                 Version,
 		"add": func(a int, b int) int {
 			return a + b
 		},
