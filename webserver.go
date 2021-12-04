@@ -387,7 +387,14 @@ func GinServer() (err error) {
 
 		if session.Protocol == HTTP && session.HTTPSession != nil && session.HTTPSession.Body != nil {
 			c.Header("Cache-Control", "no-cache")
-			c.Data(http.StatusOK, "application/json; charset=utf-8", session.HTTPSession.Body)
+			responseType := "application/json; charset=utf-8"
+
+			ct, ok := session.HTTPSession.Header["Content-Type"]
+			if ok {
+				responseType = ct[0]
+			}
+
+			c.Data(http.StatusOK, responseType, session.HTTPSession.Body)
 		} else {
 			c.String(http.StatusNotFound, "http session not found")
 			return
