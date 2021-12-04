@@ -437,9 +437,9 @@ func createSession(ip string) (*Session, error) {
 
 func createNewSessionResponse(session *Session) gin.H {
 
-	viewURL := fmt.Sprintf("http://%s:%d/v/%s", *publicIP, *publicHttpPort, session.Key)
-	textURL := fmt.Sprintf("http://%s:%d/t/%s", *publicIP, *publicHttpPort, session.Key)
-	infoURL := fmt.Sprintf("http://%s:%d/api/info/%s", *publicIP, *publicHttpPort, session.Key)
+	viewURL := fmt.Sprintf("%s://%s:%d/v/%s", *publicHttpProtocol, *publicIP, *publicHttpPort, session.Key)
+	textURL := fmt.Sprintf("%s://%s:%d/t/%s", *publicHttpProtocol, *publicIP, *publicHttpPort, session.Key)
+	infoURL := fmt.Sprintf("%s://%s:%d/api/info/%s", *publicHttpProtocol, *publicIP, *publicHttpPort, session.Key)
 
 	pay := gin.H{
 		"code":    "SESSION_CREATED",
@@ -450,10 +450,10 @@ func createNewSessionResponse(session *Session) gin.H {
 	}
 
 	if session.Protocol == HTTP {
-		pay["requestBodyURL"] = fmt.Sprintf("http://%s:%d/t/%s/body", *publicIP, *publicHttpPort, session.Key)
+		pay["requestBodyURL"] = fmt.Sprintf("%s://%s:%d/t/%s/body", *publicHttpProtocol, *publicIP, *publicHttpPort, session.Key)
 
 		for k := range session.MultiPartFiles {
-			pay[fmt.Sprintf("uploadedFile_%s_URL", k)] = fmt.Sprintf("http://%s:%d/t/%s/%s", *publicIP, *publicHttpPort, session.Key, k)
+			pay[fmt.Sprintf("uploadedFile_%s_URL", k)] = fmt.Sprintf("%s://%s:%d/t/%s/%s", *publicHttpProtocol, *publicIP, *publicHttpPort, session.Key, k)
 		}
 	}
 
