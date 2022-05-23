@@ -23,3 +23,10 @@ bin/
 dumpr.db
 scratch
 dist/
+.DS_Store
+.idea
+venv
+go.work
+go.work.sum
+go.sum
+bin
