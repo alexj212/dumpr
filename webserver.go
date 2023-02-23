@@ -25,7 +25,7 @@ func createDefaultPageData(pageName string, session *Session) gin.H {
 	data := gin.H{
 		"title":                   pageName,
 		"publicUrl":               *publicUrl,
-		"httpPort":                *httpPort,
+		"publicBinEndpoint":       *publicBinEndpoint,
 		"purgeOlderThan":          purgeOlderThan.String(),
 		"maxSessionSize":          maxSessionSize,
 		"maxSessionSizeFormatted": maxSessionSizeFormatted,

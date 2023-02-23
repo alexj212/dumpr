@@ -52,9 +52,8 @@ var (
 	serverHost        = goopt.String([]string{"--host"}, "0.0.0.0", "host for server")
 	publicUrl         = goopt.String([]string{"--publicUrl"}, "http://127.0.0.1:8080", "public url")
 	publicBinEndpoint = goopt.String([]string{"--publicBinEndpoint"}, "127.0.0.1:8081", "public url")
-
-	httpPort = goopt.Int([]string{"--port"}, 8080, "port for server")
-	tcpPort  = goopt.Int([]string{"--tcpport"}, 8081, "tcp port for server")
+	httpPort          = goopt.Int([]string{"--port"}, 8080, "port for server")
+	tcpPort           = goopt.Int([]string{"--tcpPort"}, 8081, "tcp port for server")
 
 	exportTemplates   = goopt.Flag([]string{"--export"}, nil, "export templates to --webDir value.", "")
 	purgeOlderThanStr = goopt.String([]string{"--purgeOlderThan"}, "24h", "Purge sessions from disk older than value. 0 will disable.")

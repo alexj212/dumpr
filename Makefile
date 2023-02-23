@@ -153,15 +153,6 @@ vet: ## run go vet on the project
 reportcard: ## run goreportcard-cli
 	goreportcard-cli -v
 
-release: clean # create a release
-	goreleaser release --rm-dist
-
-release-snapshot: # create release snapshot
-	goreleaser release --snapshot --skip-publish --rm-dist
-
-release-debug: # create release snapshot
-	goreleaser release --snapshot --skip-publish --rm-dist --debug
-
 
 tools: ## install dependent tools for code analysis
 	go install github.com/gordonklaus/ineffassign@latest
