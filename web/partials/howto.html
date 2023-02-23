@@ -4,38 +4,38 @@
 <h5>httpie</h5>
 
 <pre>
-    http -f POST {{.publicHttpProtocol}}://{{.publicIP}}:{{.publicTCPPort}}/hello.world  files@avatar.png
-        post a multipart form to the endpoint http://{{.publicIP}}:{{.publicHttpPort}}/hello.world
+    http -f POST {{.publicUrl}}/hello.world  files@avatar.png
+        post a multipart form to the endpoint {{.publicUrl}}/hello.world
 
-    http -f POST {{.publicHttpProtocol}}://{{.publicIP}}:{{.publicHttpPort}}/hello.text
+    http -f POST {{.publicUrl}}/hello.text
         post to the url
 
-    http -f POST {{.publicHttpProtocol}}://{{.publicIP}}:{{.publicTCPPort}}/hello.json
+    http -f POST {{.publicUrl}}/hello.json
         post to the url
 
-    http PUT {{.publicHttpProtocol}}://{{.publicIP}}:{{.publicTCPPort}}/api/test --raw 'aaaaaaa'
+    http PUT {{.publicUrl}}/api/test --raw 'aaaaaaa'
         put to the url with a body of 'aaaaaaa'
 
-    ticker.sh|nc {{.publicIP}} {{.publicTCPPort}}
-        ticker.sh is a long running command, this will take the output of the command and send to the endpoint at {{.publicIP}} {{.publicTCPPort}}
+    ticker.sh|nc {{.publicBinEndpoint}}
+        ticker.sh is a long running command, this will take the output of the command and send to the endpoint at {{.publicBinEndpoint}}
 </pre>
 
 
 <h5>cURL</h5>
-<pre>curl -X POST -d "fizz=buzz" http://{{.publicIP}}:{{.publicTCPPort}}/bwqvz6i5</pre>
+<pre>curl -X POST -d "fizz=buzz" {{.publicUrl}}/bwqvz6i5</pre>
 
 <h5>PowerShell</h5>
-<pre>powershell -NoLogo -Command "(New-Object System.Net.WebClient).DownloadFile('http://{{.publicIP}}:{{.publicTCPPort}}/bwqvz6i5', 'C:\Windows\Temp\bwqvz6i5.txt')"</pre>
+<pre>powershell -NoLogo -Command "(New-Object System.Net.WebClient).DownloadFile('{{.publicUrl}}/bwqvz6i5', 'C:\Windows\Temp\bwqvz6i5.txt')"</pre>
 
 <h5>Python (with Requests)</h5>
 <pre class="prettyprint">import requests, time
-r = requests.post('http://{{.publicIP}}:{{.publicTCPPort}}/bwqvz6i5', data={"ts":time.time()})
+r = requests.post('{{.publicUrl}}/bwqvz6i5', data={"ts":time.time()})
 print r.status_code
 print r.content</pre>
 
 <h5>Node.js (with request)</h5>
 <pre class="prettyprint">var request = require('request');
-var url ='http://{{.publicIP}}:{{.publicTCPPort}}/bwqvz6i5'
+var url ='{{.publicUrl}}/bwqvz6i5'
 request(url, function (error, response, body) {
   if (!error) {
     console.log(body);
@@ -44,7 +44,7 @@ request(url, function (error, response, body) {
 
 <h5>Ruby</h5>
 <pre class="prettyprint">require 'open-uri'
-result = open('http://{{.publicIP}}:{{.publicTCPPort}}/bwqvz6i5')
+result = open('{{.publicUrl}}/bwqvz6i5')
 result.lines { |f| f.each_line {|line| p line} }</pre>
 
 <h5>C# / .NET</h5>
@@ -64,7 +64,7 @@ namespace RequestDumprExample
     private static async Task MakeRequest()
     {
       var httpClient = new HttpClient();
-      var response = await httpClient.GetAsync(new Uri("http://{{.publicIP}}:{{.publicTCPPort}}/bwqvz6i5"));
+      var response = await httpClient.GetAsync(new Uri("{{.publicUrl}}/bwqvz6i5"));
       var body = await response.Content.ReadAsStringAsync();
       Console.WriteLine(body);
     }
@@ -81,7 +81,7 @@ import java.io.*;
 public class RequestDumprTutorial {
   public static void main(String[] args) {
     HttpClient client = new HttpClient();
-    GetMethod method = new GetMethod("http://{{.publicIP}}:{{.publicTCPPort}}/bwqvz6i5");
+    GetMethod method = new GetMethod("{{.publicUrl}}/bwqvz6i5");
     try {
       int statusCode = client.executeMethod(method);
       byte[] responseBody = method.getResponseBody();
@@ -97,7 +97,7 @@ public class RequestDumprTutorial {
 
 <h5>PHP</h5>
 <pre class="prettyprint">&lt;?php
-    $result = file_get_contents('http://{{.publicIP}}:{{.publicTCPPort}}/bwqvz6i5');
+    $result = file_get_contents('{{.publicUrl}}/bwqvz6i5');
     echo $result;
 ?&gt;</pre>
 

@@ -105,9 +105,9 @@ func handleConn(client net.Conn) {
 					response.Request = req
 					response.Header = http.Header{}
 					response.Header["X-Session-Key"] = []string{session.Key}
-					url := fmt.Sprintf("http://%s:%d/v/%s", *publicIP, *publicHttpPort, session.Key)
+					url := fmt.Sprintf("%s/v/%s", *publicUrl, session.Key)
 					response.Header["X-Session-URL"] = []string{url}
-					url = fmt.Sprintf("http://%s:%d/api/info/%s", *publicIP, *publicHttpPort, session.Key)
+					url = fmt.Sprintf("%s/api/info/%s", *publicUrl, session.Key)
 					response.Header["X-Session-Info-URL"] = []string{url}
 					response.Header["Content-Type"] = []string{"application/json; charset=utf-8"}
 					s := time.Now().UTC().Format(http.TimeFormat)
@@ -154,7 +154,7 @@ func handleConn(client net.Conn) {
 
 		if !sentHeader {
 			Broadcast(SessionUpdated, session.ToApiSession())
-			_, _ = client.Write([]byte(fmt.Sprintf("view at http://%s:%d/v/%s", *publicIP, *publicHttpPort, session.Key)))
+			_, _ = client.Write([]byte(fmt.Sprintf("view at %s/v/%s", *publicUrl, session.Key)))
 			sentHeader = true
 		}
 

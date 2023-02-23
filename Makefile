@@ -20,7 +20,17 @@ export GIT_REPO := $(shell git config --get remote.origin.url  2> /dev/null)
 export COMMIT_DATE := $(shell git log -1 --format=%cd  2> /dev/null)
 
 export BUILT_BY := $(shell whoami  2> /dev/null)
-export VERSION=v0.0.0
+
+
+export VERSION_FILE   := version.txt
+export TAG     := $(shell [ -f "$(VERSION_FILE)" ] && cat "$(VERSION_FILE)" || echo '0.5.0')
+export VERMAJMIN      := $(subst ., ,$(TAG))
+export VERSION        := $(word 1,$(VERMAJMIN))
+export MAJOR          := $(word 2,$(VERMAJMIN))
+export MINOR          := $(word 3,$(VERMAJMIN))
+export NEW_MINOR      := $(shell expr "$(MINOR)" + 1)
+export NEW_TAG := $(VERSION).$(MAJOR).$(NEW_MINOR)
+
 
 
 ifeq ($(BRANCH),)
@@ -159,5 +169,22 @@ tools: ## install dependent tools for code analysis
 	go install golang.org/x/lint/golint@latest
 	go install github.com/gojp/goreportcard/cmd/goreportcard-cli@latest
 	go install github.com/goreleaser/goreleaser@latest
+
+
+
+publish: ## tag & push to gitlab
+	@echo "\n\n\n\n\n\nRunning git add\n"
+	echo "$(NEW_TAG)" > "$(VERSION_FILE)"
+	git add -A
+	@echo "\n\n\n\n\n\nRunning git commit\n"
+	git commit -m "latest version: v$(NEW_TAG)"
+
+	@echo "\n\n\n\n\n\nRunning git tag\n"
+	git tag  "v$(NEW_TAG)"
+
+	@echo "\n\n\n\n\n\nRunning git push\n"
+	git push -f origin "v$(NEW_TAG)"
+
+	git push -f
 
 

@@ -183,10 +183,10 @@ This will launch the web server on localhost:8080 and the tcp server on 8081. A 
   * --webDir=./web
     * Set the dir for the app to use for the web assets, and templates. Only needed for creating custom templates.
 
-  * --publicIP=127.0.0.1
+  * --publicUrl=http://127.0.0.1:8080
     * Set the public ip for the service. This is used for populating templates with urls or response headers.
  
-  * --publicHttpPort=8080
+  * --publicBinEndpoint=localhost:8081
     * Set the public port for the http service. This is used for populating templates with urls or response headers.
 
   * --port=8080
@@ -194,9 +194,6 @@ This will launch the web server on localhost:8080 and the tcp server on 8081. A 
 
   * --tcpport=8081
     * Set the port for the tcp service.
-
-  * --publicTCPPort=8081
-    * Set the public port for the tcp service. This is used for populating templates with urls or response headers.
 
   * --export
     * Will make the application export the embedded templates to --webDir value. The application will exit once completed. The templates can then be customized. 

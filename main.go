@@ -46,23 +46,23 @@ var (
 	// OsSignal signal used to shut down
 	OsSignal chan os.Signal
 
-	saveDir            = goopt.String([]string{"--saveDir"}, "/tmp", "save directory")
-	webDir             = goopt.String([]string{"--webDir"}, "./web", "web assets directory")
-	quiet              = goopt.Flag([]string{"--quiet"}, []string{}, "silently log to file", "")
-	serverHost         = goopt.String([]string{"--host"}, "0.0.0.0", "host for server")
-	publicIP           = goopt.String([]string{"--publicIP"}, "127.0.0.1", "public ip")
-	publicHttpPort     = goopt.Int([]string{"--publicHttpPort"}, 8080, "public port for http server")
-	httpPort           = goopt.Int([]string{"--port"}, 8080, "port for server")
-	tcpPort            = goopt.Int([]string{"--tcpport"}, 8081, "tcp port for server")
-	publicTCPPort      = goopt.Int([]string{"--publicTCPPort"}, 8081, "public port for tcp server")
-	publicHttpProtocol = goopt.String([]string{"--publicHttpProtocol"}, "http", "default protocol on public port")
-	exportTemplates    = goopt.Flag([]string{"--export"}, nil, "export templates to --webDir value.", "")
-	purgeOlderThanStr  = goopt.String([]string{"--purgeOlderThan"}, "24h", "Purge sessions from disk older than value. 0 will disable.")
-	maxSessionSz       = goopt.Int([]string{"--maxSessionSize"}, 1, "maximum session size in mb.")
-	hasher             *hashids.HashID
-	webFS              fs.FS
-	webDirHTTPFS       http.FileSystem
-	staticDirHTTPFS    http.FileSystem
+	saveDir = goopt.String([]string{"--saveDir"}, "/tmp", "save directory")
+	webDir  = goopt.String([]string{"--webDir"}, "./web", "web assets directory")
+	//quiet              = goopt.Flag([]string{"--quiet"}, []string{}, "silently log to file", "")
+	serverHost        = goopt.String([]string{"--host"}, "0.0.0.0", "host for server")
+	publicUrl         = goopt.String([]string{"--publicUrl"}, "http://127.0.0.1:8080", "public url")
+	publicBinEndpoint = goopt.String([]string{"--publicBinEndpoint"}, "127.0.0.1:8081", "public url")
+
+	httpPort = goopt.Int([]string{"--port"}, 8080, "port for server")
+	tcpPort  = goopt.Int([]string{"--tcpport"}, 8081, "tcp port for server")
+
+	exportTemplates   = goopt.Flag([]string{"--export"}, nil, "export templates to --webDir value.", "")
+	purgeOlderThanStr = goopt.String([]string{"--purgeOlderThan"}, "24h", "Purge sessions from disk older than value. 0 will disable.")
+	maxSessionSz      = goopt.Int([]string{"--maxSessionSize"}, 1, "maximum session size in mb.")
+	hasher            *hashids.HashID
+	webFS             fs.FS
+	webDirHTTPFS      http.FileSystem
+	staticDirHTTPFS   http.FileSystem
 
 	m                       melody.Melody
 	duraFormatOveride       durafmt.Units

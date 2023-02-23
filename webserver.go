@@ -24,10 +24,7 @@ import (
 func createDefaultPageData(pageName string, session *Session) gin.H {
 	data := gin.H{
 		"title":                   pageName,
-		"publicIP":                *publicIP,
-		"publicHttpProtocol":      *publicHttpProtocol,
-		"publicHttpPort":          *publicHttpPort,
-		"publicTCPPort":           *publicTCPPort,
+		"publicUrl":               *publicUrl,
 		"httpPort":                *httpPort,
 		"purgeOlderThan":          purgeOlderThan.String(),
 		"maxSessionSize":          maxSessionSize,
@@ -442,9 +439,9 @@ func GinServer() (err error) {
 		session.InitializeHTTP(c.Request)
 
 		c.Header("X-Session-Key", session.Key)
-		url := fmt.Sprintf("http://%s:%d/t/%s", *publicIP, *publicHttpPort, session.Key)
+		url := fmt.Sprintf("%s/t/%s", *publicUrl, session.Key)
 		c.Header("X-Session-URL", url)
-		url = fmt.Sprintf("http://%s:%d/api/info/%s", *publicIP, *publicHttpPort, session.Key)
+		url = fmt.Sprintf("%s/api/info/%s", *publicUrl, session.Key)
 		c.Header("X-Session-Info-URL", url)
 
 		autoResponse := autoResponders.Find(c.Request)

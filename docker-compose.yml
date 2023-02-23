@@ -8,28 +8,24 @@ services:
   dumpr:
     image: ghcr.io/alexj212/dumpr:latest
     container_name: dumpr
-    command: /app/dumpr --webDir=/app/web --port=3000 --publicIP=172.31.46.164 --publicHttpPort=3000
+    command: /app/dumpr --webDir=/app/web --publicUrl=https://dumpr.io --publicBinEndpoint=dumpr.io:48081
     ports:
       - "48080:8080"
       - "48081:8081"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.dumpr-https.rule=Host(`dumpr.qa.paltalkconnect.com`)
+      - traefik.http.routers.dumpr-https.rule=Host(`dumpr.io`)
       - traefik.http.routers.dumpr-https.entrypoints=https
       - traefik.http.routers.dumpr-https.tls=true
-      - traefik.http.routers.dumpr-https.tls.certresolver=letsencrypt
-      - traefik.http.routers.dumpr.service=api@internal
-    ##
+      - traefik.http.routers.dumpr-https.tls.certresolver=cloudflare
+      - traefik.http.routers.dumpr-https.tls.domains[0].main=florida.dumpr.io
+      - traefik.http.routers.dumpr-https.tls.domains[0].sans=*.florida.dumpr.io
+      ##
       - traefik.http.routers.dumpr.service=dumpr-svc
-    ## HTTP Services
+      ## HTTP Services
       - traefik.http.services.dumpr-svc.loadbalancer.server.port=8080
       - traefik.http.services.dumpr-svc.loadbalancer.server.scheme=http
       - traefik.http.services.dumpr-svc.loadbalancer.passhostheader=true
-      - traefik.http.services.dumpr-svc.loadbalancer.healthcheck.interval=10
-      - traefik.http.services.dumpr-svc.loadbalancer.healthcheck.path=/
-      - traefik.http.services.dumpr-svc.loadbalancer.healthcheck.timeout=10
-      - traefik.http.services.dumpr-svc.loadbalancer.healthcheck.followredirects=true
-
 
     networks:
       - web
