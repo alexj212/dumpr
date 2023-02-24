@@ -31,5 +31,7 @@ go.work.sum
 go.sum
 bin
 dist/
+dumpr
+dist/
 
 dist/

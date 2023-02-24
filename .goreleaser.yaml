@@ -13,7 +13,10 @@ builds:
       - linux
       - windows
       - darwin
-
+    goarch:
+      - amd64
+      - arm64
+      -
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.
@@ -38,7 +41,6 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-
 
 
 
@@ -85,5 +87,3 @@ docker_manifests:
 # Feel free to remove those if you don't want/use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
-
-
