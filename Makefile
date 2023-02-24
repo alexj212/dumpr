@@ -154,13 +154,13 @@ reportcard: ## run goreportcard-cli
 	goreportcard-cli -v
 
 release: clean # create a release
-	goreleaser release --rm-dist
+	goreleaser release --clean
 
 release-snapshot: # create release snapshot
-	goreleaser release --snapshot --skip-publish --rm-dist
+	goreleaser release --snapshot --skip-publish --clean
 
 release-debug: # create release snapshot
-	goreleaser release --snapshot --skip-publish --rm-dist --debug
+	goreleaser release --snapshot --skip-publish --clean --debug
 
 
 tools: ## install dependent tools for code analysis
