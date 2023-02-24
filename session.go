@@ -12,7 +12,6 @@ import (
 	"github.com/hako/durafmt"
 	"gopkg.in/olahol/melody.v1"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -30,9 +29,6 @@ const (
 
 	// HTTP enum to define http protocol
 	HTTP = 1
-
-	// UNKNOWN enum to define unknown protocol
-	UNKNOWN Protocol = 2
 )
 
 var (
@@ -109,12 +105,12 @@ type Session struct {
 	Viewers        []*melody.Session         `json:"-"`
 	Protocol       Protocol                  `json:"protocol"`
 	MultiPartFiles map[string]*MultiPartFile `json:"multipartFiles"`
-	outputFile     *os.File                  `json:"-"`
-	Active         bool                      `json:"active"`
-	HTTPMethod     string                    `json:"httpMethod"`
-	HTTPPath       string                    `json:"httpPath"`
-	HandledByRule  string                    `json:"handled_by_rule"`
-	HTTPSession    *HTTPRequestJSON          `json:"-"`
+	outputFile     *os.File
+	Active         bool             `json:"active"`
+	HTTPMethod     string           `json:"httpMethod"`
+	HTTPPath       string           `json:"httpPath"`
+	HandledByRule  string           `json:"handled_by_rule"`
+	HTTPSession    *HTTPRequestJSON `json:"-"`
 }
 
 // ApiSession struct to store details of a session to be returned via web service in json form
@@ -170,14 +166,14 @@ func (s *Session) AgeMs() int64 {
 func (s *Session) Age() string {
 	d := time.Now().Sub(s.StartTime)
 	duration := durafmt.Parse(d)
-	return duration.Format(duraFormatOveride)
+	return duration.Format(duraFormatOverride)
 }
 
 // SessionActiveTime returns the duration of session in human-readable format
 func (s *Session) SessionActiveTime() string {
 	d := s.EndTime.Sub(s.StartTime)
 	duration := durafmt.Parse(d)
-	return duration.Format(duraFormatOveride)
+	return duration.Format(duraFormatOverride)
 }
 
 // FormattedStartTime returns formatted start time
@@ -207,7 +203,7 @@ func (s *Session) Description() string {
 			duration := durafmt.Parse(d)
 
 			// fmt.Printf("%v - %v =  %v / %v\n", s.EndTime, s.StartTime, d, duration)
-			sb.WriteString(fmt.Sprintf(" Session Life: %s", duration.Format(duraFormatOveride)))
+			sb.WriteString(fmt.Sprintf(" Session Life: %s", duration.Format(duraFormatOverride)))
 		}
 		return sb.String()
 	}
@@ -316,7 +312,7 @@ func (s *Session) LoadHTTPRequestJSON() error {
 		return fmt.Errorf("not a http protocol based session")
 	}
 
-	httpSessionBytes, err := ioutil.ReadFile(s.SaveFile)
+	httpSessionBytes, err := os.ReadFile(s.SaveFile)
 	if err != nil {
 		return err
 	}

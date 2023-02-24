@@ -12,7 +12,7 @@ import (
 	"sort"
 )
 
-// AutoResponses struct to store map of rules and ordered list to be chcked when requests come in
+// AutoResponses struct to store map of rules and ordered list to be checked when requests come in
 type AutoResponses struct {
 	m map[string]*AutoResponse
 	l []*AutoResponse
@@ -60,11 +60,10 @@ func (r *AutoResponses) Get(name string) (*AutoResponse, bool) {
 	return val, ok
 }
 
-// Delete delete the AutoResponse from the list of AutoResponders
-func (r *AutoResponses) Delete(name string) bool {
+// Delete the AutoResponse from the list of AutoResponders
+func (r *AutoResponses) Delete(name string) error {
 	delete(r.m, name)
-	r.Save()
-	return true
+	return r.Save()
 }
 
 // Update update an AutoResponse
@@ -119,7 +118,7 @@ type AutoResponse struct {
 	ContentType     string            `yaml:"content_type" json:"content_type"`
 	Response        string            `yaml:"response" json:"response"`
 	ResponseHeaders map[string]string `yaml:"responseHeaders" json:"response_headers"`
-	pathRegex       *regexp.Regexp    `yaml:"-" json:"-"`
+	pathRegex       *regexp.Regexp
 }
 
 // Bytes returns the bytes of the json formatted of the AutoResponse

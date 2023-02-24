@@ -46,9 +46,8 @@ var (
 	// OsSignal signal used to shut down
 	OsSignal chan os.Signal
 
-	saveDir = goopt.String([]string{"--saveDir"}, "/tmp", "save directory")
-	webDir  = goopt.String([]string{"--webDir"}, "./web", "web assets directory")
-	//quiet              = goopt.Flag([]string{"--quiet"}, []string{}, "silently log to file", "")
+	saveDir           = goopt.String([]string{"--saveDir"}, "/tmp", "save directory")
+	webDir            = goopt.String([]string{"--webDir"}, "./web", "web assets directory")
 	serverHost        = goopt.String([]string{"--host"}, "0.0.0.0", "host for server")
 	publicUrl         = goopt.String([]string{"--publicUrl"}, "http://127.0.0.1:8080", "public url")
 	publicBinEndpoint = goopt.String([]string{"--publicBinEndpoint"}, "127.0.0.1:8081", "public url")
@@ -64,7 +63,7 @@ var (
 	staticDirHTTPFS   http.FileSystem
 
 	m                       melody.Melody
-	duraFormatOveride       durafmt.Units
+	duraFormatOverride      durafmt.Units
 	purgeOlderThan          *durafmt.Durafmt
 	maxSessionSize          int
 	maxSessionSizeFormatted string
@@ -99,7 +98,7 @@ dumpr
 	goopt.Parse(nil)
 
 	var err error
-	duraFormatOveride, err = durafmt.DefaultUnitsCoder.Decode("y:y,w:w,d:d,h:h,m:m,s:s,ms:ms,μs:μs")
+	duraFormatOverride, err = durafmt.DefaultUnitsCoder.Decode("y:y,w:w,d:d,h:h,m:m,s:s,ms:ms,μs:μs")
 	if err != nil {
 		panic(err)
 	}
@@ -206,7 +205,7 @@ func main() {
 	})
 }
 
-// LaunchSessionReaper launches the session reaper that will cleanup sessions older than purgeOlderThan option.
+// LaunchSessionReaper launches the session reaper that will clean up sessions older than purgeOlderThan option.
 func LaunchSessionReaper() {
 	fmt.Printf("launching cleanup process, will delete sessions older than %v\n", purgeOlderThan)
 

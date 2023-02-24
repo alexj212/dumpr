@@ -15,7 +15,6 @@ import (
 	"gopkg.in/olahol/melody.v1"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -123,7 +122,7 @@ func GinServer() (err error) {
 			return "", fmt.Errorf("ViewEngine tplFileName:%v error: %v", tplFileName, err)
 		}
 
-		data, err := ioutil.ReadAll(tplFile)
+		data, err := io.ReadAll(tplFile)
 		if err != nil {
 			return "", fmt.Errorf("ViewEngine render read name:%v, error: %v", tplFileName, err)
 		}
@@ -204,12 +203,12 @@ func GinServer() (err error) {
 			return
 		}
 
-		success := autoResponders.Delete(name)
-		if !success {
+		err := autoResponders.Delete(name)
+		if err != nil {
 			payload := gin.H{
 				"result":  "failed",
 				"code":    "AutoResponder-NOT-FOUND",
-				"message": fmt.Sprintf("DeleteAutoResponder [%s] returned false", name),
+				"message": fmt.Sprintf("DeleteAutoResponder [%s] error: %v", name, err),
 			}
 			ctx.JSON(404, payload)
 			return

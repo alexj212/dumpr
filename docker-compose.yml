@@ -8,7 +8,7 @@ services:
   dumpr:
     image: ghcr.io/alexj212/dumpr:latest
     container_name: dumpr
-    command: /app/dumpr --webDir=/app/web --publicUrl=https://dumpr.io --publicBinEndpoint=dumpr.io:48081
+    command: /app/dumpr --publicUrl=https://dumpr.io --publicBinEndpoint=dumpr.io:48081
     ports:
       - "48080:8080"
       - "48081:8081"

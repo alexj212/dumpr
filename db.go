@@ -40,7 +40,7 @@ func InitializeDB() (*bolt.DB, error) {
 
 	fmt.Printf("Opened dumpr.db data file\n")
 
-	db.Update(func(tx *bolt.Tx) error {
+	_ = db.Update(func(tx *bolt.Tx) error {
 		_, _ = tx.CreateBucket([]byte(SessionBucket))
 		// ignore bucket already created error
 		return nil
@@ -59,7 +59,7 @@ func InitializeDB() (*bolt.DB, error) {
 		// empty bucket on first call.
 		responses := CreateDefaultRules()
 		for _, val := range responses {
-			StoreResponder(val)
+			_ = StoreResponder(val)
 		}
 
 	}
