@@ -9,6 +9,16 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X main.BuildDate={{.Date}}
+      - -X main.GitRepo={{.Version}}
+      - -X main.BuiltBy=goreleaser
+      - -X main.CommitDate={{.CommitTimestamp}}
+      - -X main.LatestCommit={{.Commit}}
+      - -X main.Branch={{.Version}}
+      - -X main.Version={{.Version}}
+
     goos:
       - linux
       - windows
@@ -16,7 +26,17 @@ builds:
     goarch:
       - amd64
       - arm64
-      -
+
+        # List of combinations of GOOS + GOARCH + GOARM to ignore.
+      # Default is empty.
+    ignore:
+      - goos: linux
+        goarch: arm
+        goarm: 7
+      - goarm: mips64
+      - gomips: hardfloat
+      - goamd64: v4
+
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.

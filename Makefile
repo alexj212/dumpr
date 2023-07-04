@@ -2,23 +2,20 @@
 -include .env
 export $(shell [ -f ".env" ] && sed 's/=.*//' .env)
 
-export BIN_DIR=./bin
-export DIST_DIR=./dist
+export BIN_DIR=./
 export PROJ_PATH=github.com/alexj212/dumpr
-export DOCKER_APP_NAME=dumpr
+
 
 
 export DATE := $(shell date +%Y.%m.%d-%H%M)
 export BUILT_ON_IP := $(shell [ $$(uname) = Linux ] && hostname -i || hostname )
 export RUNTIME_VER := $(shell go version)
 export BUILT_ON_OS=$(shell uname -a)
-
 export LATEST_COMMIT := $(shell git rev-parse HEAD 2> /dev/null)
 export COMMIT_CNT := $(shell git rev-list --all 2> /dev/null | wc -l | sed 's/ //g' )
 export BRANCH := $(shell git branch  2> /dev/null |grep -v "no branch"| grep \*|cut -d ' ' -f2)
 export GIT_REPO := $(shell git config --get remote.origin.url  2> /dev/null)
 export COMMIT_DATE := $(shell git log -1 --format=%cd  2> /dev/null)
-
 export BUILT_BY := $(shell whoami  2> /dev/null)
 
 
@@ -50,7 +47,7 @@ export COMPILE_LDFLAGS=-s -X "main.BuildDate=${DATE}" \
                           -X "main.CommitDate=${COMMIT_DATE}" \
                           -X "main.LatestCommit=${LATEST_COMMIT}" \
                           -X "main.Branch=${BRANCH}" \
-						  -X "main.Version=${VERSION}"
+						  -X "main.Version=${NEW_TAG}"
 
 
 build_info: check_prereq ## Build the container

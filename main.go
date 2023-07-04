@@ -47,10 +47,10 @@ var (
 	OsSignal chan os.Signal
 
 	saveDir           = goopt.String([]string{"--saveDir"}, "/tmp", "save directory")
-	webDir            = goopt.String([]string{"--webDir"}, "./web", "web assets directory")
+	webDir            = goopt.String([]string{"--webDir"}, "/tmp/web", "web assets directory")
 	serverHost        = goopt.String([]string{"--host"}, "0.0.0.0", "host for server")
 	publicUrl         = goopt.String([]string{"--publicUrl"}, "http://127.0.0.1:8080", "public url")
-	publicBinEndpoint = goopt.String([]string{"--publicBinEndpoint"}, "127.0.0.1:8081", "public url")
+	publicBinEndpoint = goopt.String([]string{"--publicBinEndpoint"}, "127.0.0.1 8081", "public binary ip/port")
 	httpPort          = goopt.Int([]string{"--port"}, 8080, "port for server")
 	tcpPort           = goopt.Int([]string{"--tcpPort"}, 8081, "tcp port for server")
 
