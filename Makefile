@@ -185,3 +185,6 @@ publish: ## tag & push to gitlab
 	git push -f
 
 
+upgrade:
+	go get -u ./...
+	go mod tidy
